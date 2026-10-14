@@ -15,6 +15,7 @@ def replace(rel, old, new, label):
     s = p.read_text(encoding="utf-8")
     count = s.count(old)
     if count != 1:
+        print("SOURCE_PREVIEW", label, s[:5000])
         raise RuntimeError(f"{label}: expected 1 exact source match, got {count}")
     p.write_text(s.replace(old, new, 1), encoding="utf-8")
     print("FIX_OK", label)
