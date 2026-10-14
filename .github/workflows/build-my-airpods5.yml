@@ -32,7 +32,9 @@ jobs:
           set -euo pipefail
           SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          "$SDKMANAGER" 'platforms;android-37' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          sed -i 's/compileSdk = 36/compileSdk = 37/' input/app_source/android/app/build.gradle.kts
+          grep -F 'compileSdk = 37' input/app_source/android/app/build.gradle.kts
           echo "sdk.dir=${ANDROID_HOME}" > input/app_source/android/local.properties
       - name: Compile LibrePods-derived independent Korean APK from source
         working-directory: input/app_source/android
