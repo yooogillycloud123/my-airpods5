@@ -126,6 +126,33 @@ g = g.replace('versionName = "1.0.3-ko-personal"', 'versionName = "1.0.4-persona
 gradle.write_text(g, encoding="utf-8")
 print("FIX_OK", "source_version_10004")
 
+# The original service has three more cross-device island call sites that
+# force-unwrap BOTH bud levels. They are triggered by takeover/disconnect and
+# would still crash when only one bud has reported a battery level.
+import re
+service_path = base / "services/AirPodsService.kt"
+service = service_path.read_text(encoding="utf-8")
+unsafe = (r"batteryNotification\\.getBattery\\(\\)\\s*"
+          r"\\.find \\{ it\\.component == BatteryComponent\\.LEFT \\}\\?\\.level!!\\.coerceAtMost\\(\\s*"
+          r"batteryNotification\\.getBattery\\(\\)\\s*"
+          r"\\.find \\{ it\\.component == BatteryComponent\\.RIGHT \\}\\?\\.level!!\\s*\\)")
+service, remaining = re.subn(unsafe, "safeVisibleBatteryLevel()", service)
+if remaining != 3:
+    raise RuntimeError(f"Expected 3 additional one-bud takeover crash paths, found {remaining}")
+helper = '''    private fun safeVisibleBatteryLevel(): Int {
+        return batteryNotification.getBattery()
+            .filter { it.component == BatteryComponent.LEFT || it.component == BatteryComponent.RIGHT }
+            .map { it.level }
+            .minOrNull() ?: 0
+    }
+
+'''
+needle = '    fun isBluetoothSocketExempted(): Boolean {'
+assert service.count(needle) == 1
+service = service.replace(needle, helper + needle, 1)
+service_path.write_text(service, encoding="utf-8")
+print("FIX_OK", "three_remaining_single_ear_takeover_null_guards")
+
 # Fail closed if an actual one-ear crash vector still exists.
 svc = (base / "services/AirPodsService.kt").read_text(encoding="utf-8")
 assert '?.level!!' not in svc and 'getBattery()[1]' not in svc
