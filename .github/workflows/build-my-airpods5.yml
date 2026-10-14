@@ -8,6 +8,7 @@ on:
       - "My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip"
       - "ci/repair_personal_core_v104.py"
       - "ci/repair_personal_core_v105.py"
+      - "ci/repair_personal_ui_v106.py"
 permissions:
   contents: write
 jobs:
@@ -29,16 +30,22 @@ jobs:
           unzip -q "$FILE" -d input
           test -s input/app_source/LICENSE
           grep -F 'applicationId = "com.myairpods5.personal"' input/app_source/android/app/build.gradle.kts
-      - name: Fix first-run Korean UI and repeated service binding from source
+      - name: Restore pristine functional Bluetooth/ANC/battery core; patch Korean UI ONLY
         shell: bash
         run: |
           set -euo pipefail
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          sha256sum "$SRC/MainActivity.kt" "$SRC/LibrePodsApplication.kt" "$SRC/presentation/viewmodel/AirPodsViewModel.kt" >> input/PRISTINE_ENGINE_SHA256.txt
           python3 ci/repair_korean_onboarding_and_service.py input/app_source
-          python3 ci/repair_personal_core_v104.py input/app_source
-          python3 ci/repair_personal_core_v105.py input/app_source
-          python3 -m py_compile ci/repair_personal_core_v104.py
-          grep -F 'versionCode = 10005' input/app_source/android/app/build.gradle.kts
-          ! grep -F 'Last updated: 20 June 2026' input/app_source/android/app/src/main/java/me/kavishdevar/librepods/presentation/screens/onboarding/PrivacyPolicyPage.kt
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          cmp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          grep -F 'versionCode = 10006' input/app_source/android/app/build.gradle.kts
+          ! grep -F 'Last updated: 20 June 2026' "$SRC/presentation/screens/onboarding/PrivacyPolicyPage.kt"
+          echo "PRISTINE_CORE_BYTE_FOR_BYTE=PASS"
       - name: Install supported Android 36 SDK / NDK 28
         run: |
           set -euo pipefail
@@ -58,7 +65,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_Korean_v1.0.5_SINGLE_EAR_LIFECYCLE_CANDIDATE.apk
+          APK=dist/My_AirPods5_v1.0.6_PRISTINE_CORE_KOREAN_UI.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -66,12 +73,13 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "Single ear crash paths patched, permission-resume retry added. AACP/socket & ANC remain unverified physically. Signing per build ephemeral; never force uninstall of previous app without explicit consent." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "PRISTINE engine: source archive MainActivity, Bluetooth, AACP, ATT, BLE, battery/service, receiver and AirPodsViewModel byte-identical at source level. UI/locale only. APK CI compiled; Galaxy real device validation pending. GitHub debug signer per-run ephemeral; in-place update over v1.0.3/5 not possible. Do NOT remove working original LibrePods. Do not uninstall previous personal app without user approval." > dist/DEVICE_TEST_REQUIRED.txt
+          cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
       - name: Publish APK as free prerelease
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TAG="my-airpods5-test-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods5 source test $GITHUB_RUN_NUMBER" --notes "LibrePods GPL source-derived Korean test app. Physical installation and feature testing pending." --prerelease
+          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.6 pristine-core Korean UI" --notes "Original archived LibrePods-based Bluetooth/AACP/ANC/battery/control engine and MainActivity preserved byte-for-byte in SOURCE (SHA gate), prior v1.0.3-1.0.5 engine changes rejected. Korean UI only. Real Galaxy testing pending, debug signer rotates each run; do not uninstall functional original app." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
