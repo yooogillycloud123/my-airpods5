@@ -27,6 +27,13 @@ jobs:
           unzip -q "$FILE" -d input
           test -s input/app_source/LICENSE
           grep -F 'applicationId = "com.myairpods5.personal"' input/app_source/android/app/build.gradle.kts
+      - name: Fix first-run Korean UI and repeated service binding from source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          grep -F 'versionCode = 10003' input/app_source/android/app/build.gradle.kts
+          ! grep -F 'Last updated: 20 June 2026' input/app_source/android/app/src/main/java/me/kavishdevar/librepods/presentation/screens/onboarding/PrivacyPolicyPage.kt
       - name: Install supported Android 36 SDK / NDK 28
         run: |
           set -euo pipefail
