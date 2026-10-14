@@ -1,5 +1,12 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 실제 결과물 추가 / CI VERIFIED (실물 작동 검증과 구분)
+- v1.0.6 개인용 APK: `My_AirPods5_v1.0.6_PRISTINE_CORE_KOREAN_UI.apk`, GitHub release `my-airpods5-test-r14` (`https://github.com/yooogillycloud123/my-airpods5/releases/tag/my-airpods5-test-r14`).
+- CI run `38644369485` job `116127479121` **SUCCESS**. 원본 소스 아카이브 SHA PASS, 원본 `MainActivity.kt`, Bluetooth/AACP/ATT/BLE, 서비스/receiver/data/ViewModel/Application **원본 대비 소스 바이트 SHA256 PASS**, 변경점은 한국어 온보딩/앱 설정 UI/문자열/버전 뿐.
+- APK SHA-256 `f7788b3df715e75efac10d41dd7987d131ac04a87257a88ac8a46368efbc0d9c`, size `51,293,846` bytes, package `com.myairpods5.personal`, versionCode `10006`, signature cert `1c590b0ca3afece10e85159c4120b544fa4169739c3e7811f289b096f40b5be6`, v2/ZIP PASS.
+- **실물 앱 연결/한쪽 착용/배터리/ANC는 아직 테스트되지 않았으며 PASS 아님**. 기존 v1.0.3/v1.0.5와 다른 CI 디버그 서명이므로 업데이트 설치가 거부될 수 있음. 원본 정상 앱을 삭제하지 말 것.
+
+
 **최상위 사용자 확정 지시: 설명/분석/소스만 제출하고 종료하지 않는다. 이 프로젝트의 모든 실제 수정 요청은 가능한 범위에서 소스 패치 → 실제 Android CI 빌드 → APK ZIP·패키지·서명·SHA 검사 → 실제 설치 가능한 APK 링크 전달까지 같은 작업 안에서 수행한다. 빌드 실패 시 로그로 원인 교정하고 재실행한다. 빌드 전/실기 검증 전 상태를 FINAL 또는 작동 PASS라고 표현하지 않는다.**
 
 ## 1. 실제 물리 검증 사실 / 목표
