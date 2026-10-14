@@ -87,27 +87,14 @@ replace("bluetooth/BLEManager.kt",
 
 # This is a personal derivative distributed under GPL, using the existing FOSS
 # implementation, not a Google Play purchase receipt or paid cloud entitlement.
-replace("billing/FOSSBillingProvider.kt",
-    'private val _isPremium = MutableStateFlow(false)',
-    'private val _isPremium = MutableStateFlow(true)',
-    "enable_locally_licensed_foss_features")
+# The immutable archived source already enables the locally licensed GPL feature
+# switches by default. Preserve its existing FOSS contract, without fake billing.
 p = base / "billing/FOSSBillingProvider.kt"
-s = p.read_text(encoding="utf-8")
-start = s.index('    override fun purchase(activity: Activity) {')
-end = s.index('    override fun restorePurchases() {', start)
-s = s[:start] + '''    // All locally implementable GPL features are free in this private fork.
-    // No sponsorship, billing, or remote entitlement is initiated.
-    override fun purchase(activity: Activity) {
-        _isPremium.value = true
-    }
-
-    override fun queryPurchases() {
-        _isPremium.value = true
-    }
-
-''' + s[end:]
-p.write_text(s, encoding="utf-8")
-print("FIX_OK", "foss_no_external_purchase_or_sponsorship")
+foss = p.read_text(encoding="utf-8")
+assert 'private val _isPremium = MutableStateFlow(true)' in foss
+assert 'override fun queryPurchases()' in foss
+assert 'https://github.com/sponsors/' not in foss
+print("FIX_OK", "already_premium_enabled_in_verified_original_source")
 
 p = base / "presentation/screens/AppSettingsScreen.kt"
 s = p.read_text(encoding="utf-8")
