@@ -78,6 +78,10 @@ jobs:
           APK=dist/My_AirPods5_v1.0.9_CRASH_LOG_CAPTURE.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
+          # Verify the DEX, not merely source text, actually contains the crash recorder.
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF "AirPodsCrashDiary" >/dev/null
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF "airpods_last_fatal.txt" >/dev/null
+          echo "APK_DIAGNOSTIC_CRASH_RECORDER_IN_DEX=PASS"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
           grep -F "name='com.myairpods5.personal'" dist/PACKAGE.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
