@@ -1,5 +1,19 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 사용자 신규 영상 → 실제 버그 수정 APK v1.0.8 CI 성공
+
+- 사용자 최신 화면 녹화 `Screen_Recording_20261015_071445_One UI Home.mp4`, 20.24초: 앱 열기 → 연결 안 됨 → 배터리 100%와 노이즈 제어 UI가 잠깐 보임 → 홈 화면으로 앱이 반복 종료. 원본 LibrePods에서는 동일 AirPods 정상. 단순 '원본 정상 코드라서 문제 없음'이라는 진단 금지.
+- 소스에서 반복 재진입의 직접적인 구조적 원인 확인: 이전 v1.0.6은 원본 `MainActivity.kt`를 복원하면서 `@Composable Main()` **본문의 `if(onboardingComplete) bindService()`**를 함께 복원함. Compose 배터리/UI 업데이트 시 매번 `startForegroundService+bindService` 호출, ServiceConnection→ViewModel.init→UI state 변경→recomposition→bindService라는 자기증폭 경로 발생.
+- 추가 안정성 결함: `AirPodsService.kt`에서 한쪽 이어버드 배터리 정보가 없는 경우에도 `?.level!!` 4개 지점과 `getBattery()[1]`을 강제 접근함. 한쪽 착용 이벤트에서 예외 발생 가능.
+- `ci/repair_personal_activity_v107.py`: onStop 중복 unbind 방지, Activity onDestroy가 서비스 receiver 해제하던 동작 제외, Composable side effect를 LaunchedEffect 1회로 제한, ServiceConnection 중복 init 방지, 빈 ANC packet 안전 접근.
+- `ci/repair_personal_oneear_v108.py`: 4개 null assert 안전 변경 + battery component별 status + 짧은 ear-state packet guard. 실제 ANC 명령/이어버드 동작 로직은 건드리지 않음.
+- **CI SUCCESS:** `38647015563` job `116136259445`; `BUILD SUCCESSFUL in 3m 51s`; Original `bluetooth/*`, 기타 서비스·데이터·receiver, Application SHA source PASS; targeted source patch gates PASS, APK ZIP/서명 PASS.
+- **APK:** `https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-test-r16/My_AirPods5_v1.0.8_SINGLE_EAR_LIFECYCLE_BATTERY_GUARD.apk`, versionCode `10008`, size 51,293,838 bytes, SHA-256 `eeada9a7f01a52c841913da59b5c547b816ceafa051d7a7be47791eab88d08bb`, signer SHA256 `269f9dcd50054019f13e54919c8f0bd54129d778a2a8134dd7fc931cdc2fb81f`.
+- **IMPORTANT:** Galaxy 실물 회귀/배터리/ANC PASS는 아직 아님. 단말에 동시 설치된 진짜 LibrePods 서비스가 L2CAP 제어 채널을 이미 점유할 수 있음; 원본 삭제하지 않고 **일시적으로 강제종료**한 상태에서만 비교 시험하도록 권고. Debug APK마다 다른 서명 → 덮어쓰기 불가. 영구 서명 및 OTA 미해결.
+- 다음 요청은 이 v1.0.8 결과를 출발점으로 이어가며, 더 이상 v1.0.6 'pristine'이라는 이유만으로 Composable 원본 바인드 반복 결함을 되돌리지 말 것.
+
+---
+
 ## 2026-10-15 실제 결과물 추가 / CI VERIFIED (실물 작동 검증과 구분)
 - v1.0.6 개인용 APK: `My_AirPods5_v1.0.6_PRISTINE_CORE_KOREAN_UI.apk`, GitHub release `my-airpods5-test-r14` (`https://github.com/yooogillycloud123/my-airpods5/releases/tag/my-airpods5-test-r14`).
 - CI run `38644369485` job `116127479121` **SUCCESS**. 원본 소스 아카이브 SHA PASS, 원본 `MainActivity.kt`, Bluetooth/AACP/ATT/BLE, 서비스/receiver/data/ViewModel/Application **원본 대비 소스 바이트 SHA256 PASS**, 변경점은 한국어 온보딩/앱 설정 UI/문자열/버전 뿐.
