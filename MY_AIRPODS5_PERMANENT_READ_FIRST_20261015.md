@@ -1,5 +1,19 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 08:10 KST — 사용자 v1.0.8 여전히 동일 오류 → **증거 수집 우선 고정**
+
+- 사용자 새 스크린샷에서 실제 배터리 100%/96%, 알림 `주현팟` 및 청취 모드 메뉴는 나타나지만 앱을 누르면 다시 홈으로 튕김. **UI/알림이 보인다는 이유로 제어 성공 또는 종료 원인을 확정하지 말 것.**
+- 이전 v1.0.3~1.0.8의 원인을 로그 없이 단정하며 반복 패치한 것은 회귀를 해결하지 못했다. **추가 서비스/오디오 수정 전에 AndroidRuntime FATAL EXCEPTION 또는 ActivityManager 프로세스 종료 근거를 먼저 수집한다.**
+- 실제 빌드된 `My_AirPods5_v1.0.9_CRASH_LOG_CAPTURE.apk`는 'FIX'가 아니라 진단용. `my-airpods5-test-r20` GitHub Release: `https://github.com/yooogillycloud123/my-airpods5/releases/tag/my-airpods5-test-r20`. CI run `38651819222` PASS, original Bluetooth/AACP/ATT/BLE frozen, `AirPodsCrashDiary` Android DEX 포함 게이트 PASS.
+- 최종 APK SHA256 `42febe6220fb63f44ede1b60708a812f4a445b390a54e83ebd20c84b982964cd`; package `com.myairpods5.personal` versionCode `10009`; debug signer SHA256 `1fd80e747f04782ad3fa9a9e2caad9b245d474201650e9e9cae6e5da84eb20dd`; byte size `51293838`; source/build/ZIP/signature gates PASS.
+- `ci/add_personal_diagnostics_v109.py`: Application 진입 즉시 Java UncaughtExceptionHandler 설치, 디스크에 최근 fatal stack trace 및 간단한 Activity/service/ViewModel lifecycle 기록; 매 실행 시 한국어 `앱 실행 / 로그 복사 / 로그 공유` 다이얼로그 제공. 자동 인터넷 전송/권한상승 없음.
+- 사용자가 설치 후 `앱 실행`→이전 강제종료 재현→다시 열고 `로그 복사`→채팅에 붙여넣기. 만약 `NO_JAVA_FATAL_CAPTURED`라면 정상으로 판정하지 말고 Android 시스템 종료 로그 확보.
+- 동일 Release에 `Capture-MyAirPods5-SystemCrash.ps1` 제공: 연결된 PC의 ADB에서 `-b crash` 및 관련 시스템 로그를 **읽기 전용**으로 추출하는 보조 방법. 데이터 초기화/페어링 재설정/원본 정상 LibrePods 삭제는 금지. 개인정보 포함 가능성을 고지.
+- 매 GH Actions 실행마다 debug signer 변경. 기존 개인 앱과 서명이 달라 덮어쓰기는 불가할 수 있으며 사용자가 개인용 앱 재설치를 승인해야 함. 정상 LibrePods는 남긴다.
+- **v1.0.9는 로그 확보 목적이며 실제 크래시 원인 해결/ANC PASS가 아니다.** 후속 패치는 stack trace 패키지/클래스/라인을 확인한 뒤 최소 범위만 수정, 실제 APK 빌드 링크까지 전달.
+
+---
+
 ## 2026-10-15 사용자 신규 영상 → 실제 버그 수정 APK v1.0.8 CI 성공
 
 - 사용자 최신 화면 녹화 `Screen_Recording_20261015_071445_One UI Home.mp4`, 20.24초: 앱 열기 → 연결 안 됨 → 배터리 100%와 노이즈 제어 UI가 잠깐 보임 → 홈 화면으로 앱이 반복 종료. 원본 LibrePods에서는 동일 AirPods 정상. 단순 '원본 정상 코드라서 문제 없음'이라는 진단 금지.
