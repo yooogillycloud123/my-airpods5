@@ -71,6 +71,32 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
           echo "sdk.dir=${ANDROID_HOME}" > input/app_source/android/local.properties
+      - name: Use persistent private signing key ONLY when secured GitHub secrets exist
+        env:
+          AIRPODS_SIGNER_BASE64: ${{ secrets.AIRPODS_SIGNER_BASE64 }}
+          AIRPODS_SIGNER_STORE_PASSWORD: ${{ secrets.AIRPODS_SIGNER_STORE_PASSWORD }}
+          AIRPODS_SIGNER_KEY_ALIAS: ${{ secrets.AIRPODS_SIGNER_KEY_ALIAS }}
+          AIRPODS_SIGNER_KEY_PASSWORD: ${{ secrets.AIRPODS_SIGNER_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${AIRPODS_SIGNER_BASE64}" ] && [ -n "${AIRPODS_SIGNER_STORE_PASSWORD}" ] && [ -n "${AIRPODS_SIGNER_KEY_ALIAS}" ] && [ -n "${AIRPODS_SIGNER_KEY_PASSWORD}" ]; then
+            umask 077
+            mkdir -p input/app_source/android/.secure-local
+            printf '%s' "${AIRPODS_SIGNER_BASE64}" | base64 -d > input/app_source/android/.secure-local/airpods-personal.jks
+            chmod 600 input/app_source/android/.secure-local/airpods-personal.jks
+            {
+              printf '%s\n' 'RELEASE_STORE_FILE=.secure-local/airpods-personal.jks'
+              printf 'RELEASE_STORE_PASSWORD=%s\n' "${AIRPODS_SIGNER_STORE_PASSWORD}"
+              printf 'RELEASE_KEY_ALIAS=%s\n' "${AIRPODS_SIGNER_KEY_ALIAS}"
+              printf 'RELEASE_KEY_PASSWORD=%s\n' "${AIRPODS_SIGNER_KEY_PASSWORD}"
+            } >> input/app_source/android/local.properties
+            echo "STABLE_SIGNING=READY" > input/SIGNING_STATE.txt
+            echo "Stable key loaded from private GitHub Actions secrets; keystore contents not printed."
+          else
+            echo "STABLE_SIGNING=NOT_CONFIGURED" > input/SIGNING_STATE.txt
+            echo "::warning::Long-term signature missing; LAB APK cannot be an in-place update over r21 GOLDEN."
+          fi
       - name: Compile LibrePods-derived independent Korean APK from source
         working-directory: input/app_source/android
         run: |
@@ -98,6 +124,7 @@ jobs:
           echo "v1.0.11 ISOLATED BETA: base r21 golden protocol frozen; adds Settings update check and local crash logs, removes startup popup. SHA256/certificate/package verified before APK installer. No stable signing configured on CI: THIS APK CANNOT UPDATE INSTALLED GOLDEN r21 IN PLACE. Never uninstall user-verified r21 to test a beta. Physical regression unknown. Charging-case find-my beep NOT implemented." > dist/DEVICE_TEST_REQUIRED.txt
           cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
+          cp input/SIGNING_STATE.txt dist/SIGNING_STATE.txt
       - name: Publish APK as free prerelease
         env:
           GH_TOKEN: ${{ github.token }}
