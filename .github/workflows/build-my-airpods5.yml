@@ -38,6 +38,7 @@ jobs:
         working-directory: input/app_source/android
         run: |
           set -euo pipefail
+          python3 ../../../tools/repair_ko_onboarding.py ..
           chmod +x ./gradlew
           ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --stacktrace --console=plain --max-workers=2
       - name: Verify APK and signer
@@ -46,7 +47,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_Korean_FOSS_SOURCE_BUILT_TEST.apk
+          APK=dist/My_AirPods5_Korean_v1.0.3_ONBOARDING_CRASHFIX_TEST.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
