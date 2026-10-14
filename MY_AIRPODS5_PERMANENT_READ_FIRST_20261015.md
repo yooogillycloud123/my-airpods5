@@ -1,5 +1,16 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 08:24 KST — PERSONAL GOLDEN PHYSICAL PASS: v1.0.10 LOCKED
+
+- **가장 최신 최우선 상태:** 사용자가 `오케이 청취모드도 작동하고`라고 직접 확인. 새 스크린샷: `주현팟` 개인용 앱 정상 표시, 배터리 100%, 청취 모드 4버튼. 기존 즉시 홈 튕김 없음.
+- 기기 로컬 로그: 한 프로세스가 약 2분 넘게 살아 있고 `NO_JAVA_FATAL_CAPTURED`, 반복 App/Service 초기화 완료 기록; `Activity.onDestroy`는 정상 종료 이벤트일 수 있으므로 그 자체를 크래시로 오인 금지.
+- **`v1.0.10` 사용자 검증 GOLDEN 기준 영구 고정**: 정확한 릴리스 `my-airpods5-test-r21`, APK SHA256 `b46c8e38f28332f7af0f98bce7b8b27234f62a83d103363cf0697a2fd127445b`, 빌드 commit `629f45dcc7b4189b713876660ddc2e18cf13f38a`. 별도 확정 매니페스트 `MY_AIRPODS5_V1_0_10_USER_VERIFIED_GOLDEN_LOCK_20261015.md` 필독. APK 수정·릴리스 바꿔치기·재서명·삭제 금지, 향후 개발은 별도 버전 후보에서 시작하고 실물 회귀 성공 후 승격.
+- 이 앱의 `AirPodsCrashDiary.kt` 보고서 헤더에 있는 `My AirPods 5 1.0.9 local diagnostics`는 **진단 코드의 정적 문자열**이며 실제 설치 APK가 v1.0.9라는 증거가 아님. 별도 개발 버전에서 BuildConfig 기반으로 개선 가능하나 GOLDEN은 불변.
+- **USER PHYSICAL PASS**: 앱 정상 실행/유지, 청취 모드 전환 작동. **DISPLAY PASS / ACCURACY UNKNOWN**: 배터리 100%. **SOURCE ONLY or UNKNOWN**: 한쪽 사용/세 요소 동시 배터리, widget/QS, 완전 한글화, 온디바이스 premium per-model, 팝업/오디오 핸드오프, 영구 서명/OTA.
+- 사용자 의사: "일단 이 버전 픽스해놓고 수정발전 시킬 부분들을 공유해보자". 즉 여기서는 **새 APK 업데이트 강행 금지, 안정본 보존 + 실제 소스 기능 조사 및 우선순위 논의** 우선.
+
+---
+
 ## 2026-10-15 08:11 실측 Java Fatal 확정 → v1.0.10 정확한 크래시 수정 / APK 산출
 
 - 사용자가 v1.0.9 앱 `로그 복사`로 보고한 원문: `WindowManager$BadTokenException: Unable to add window -- token null is not valid`, `android.widget.VideoView$5.onError(VideoView.java:615)` → `android.app.AlertDialog$Builder.show`, **main thread**, pid 28747/29518/29804/29995/30137에서 반복. `AirPodsViewModel.init COMPLETE` 직후 1~2초 후 동일 종료가 재현됨. **원인은 배터리 값·AACP 통신 크래시가 아니라 Android VideoView 오류 팝업이 Activity token 없는 서비스 오버레이에서 표시되려다가 발생한 것으로 직접 입증**.
