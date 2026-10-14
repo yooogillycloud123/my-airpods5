@@ -1,5 +1,18 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 다음 우선순위 확정 — 안전한 앱내 업데이트 → 로그 메뉴 이전 → 케이스 찾기 소리
+
+- USER-PASS 업데이트: **4개 청취 모드 전부 실제 작동** (`끔/주변음 허용/적응형/노이즈 캔슬링`). 기존 v1.0.10 GOLDEN release `my-airpods5-test-r21` 그대로 고정. 사용자의 현재 설치본 삭제/데이터 제거/서명 변경 요청 금지.
+- 사용자 지정 개발순서: **(1) 앱 안에서 업데이트 확인·업데이트 설치**와 업데이트마다 반복 설치·삭제 부담 감소, **(2) 매번 자동 표시되는 진단 다이얼로그 없애고 `설정→오류 기록`에서 수동 로그 확인**, 이후 **(3) '나의 찾기' 케이스 스피커 삐삐삐 소리 유도** 별도 개발.
+- v1.0.11 전용 **독립 작업 브랜치** `airpods-personal-v111-updater-diagnostics` 시작(원본 v1.0.10 성공 커밋 `629f45d...` 기준), 여기에 `ci/PersonalUpdateManager_v111.kt`, `ci/patch_personal_v111_updater_logs.py`, 기능 설명 `V111_UPDATER_LOGS_AND_CASE_BEEP_NOTES.md`; **GOLDEN APK와 main 빌드 흐름을 변경하지 않음**.
+- 인앱 업데이터는 사용자 클릭 시만 공개 GitHub `main/update-channel.json` 확인, SHA256/동일 패키지/높은 versionCode/동일 서명 인증서 검증 후 APK 다운로드·설치 화면 호출. 서명 불일치 시 보호 중단, 자동 강제삭제/설치 금지. 해당 채널은 **r21 v1.0.10 버전으로 잠금**; 검증된 신버전만 승격.
+- 진단 로그 수집은 유지하되 매 실행의 자동 AlertDialog를 제거하고 앱 설정 `오류 기록`에서만 로그 복사·공유. 정적 v1.0.9 로그 헤더를 BuildConfig.VERSION_NAME으로 변경.
+- **가장 중요한 Android 제한:** r21의 개인 signing key가 CI 임시 debug key였고 private key가 보존되지 않아 현재 설치된 r21은 다른 서명 APK로 **데이터 유지 자동 업그레이드 불가**. private keystore를 공개 저장소에 저장하지 말고 GitHub Actions 비밀정보로 고정 장기 서명을 갖춰야 향후 업데이트가 매번 작동함. 최초 서명 교체는 사용자 승인 후 1회 이관 필수; 이 제약 해결 전 '무삭제 업데이트 완성'이라고 주장하지 말 것.
+- 케이스 찾기 소리: Apple 공식 정보상 **AirPods 5 무선 충전 케이스 모델**에 Find My speaker가 있음. 일반 USB-C 케이스는 해당 스피커 없음. LibrePods 상류 README의 `Play sound through charging case to find it`는 **계획 중 / 역공학 필요 / 루트 요구 가능성**이고 구현 기능 아님. 상류 PR #764의 `IN_CASE_TONE_CONFIG (0x31)`은 **충전 케이스 동작음 켜기/끄기**용으로 **분실 찾기 삐삐 호출 명령과 다름**. 정체불명 Opcode 송신 금지, 하드웨어 정확한 모델 및 프로토콜 입증부터.
+- beta CI/릴리스 결과가 나오면 해당 커밋/다운로드 URL/서명과 GOLDEN 차이를 기록할 것. **사용자가 명시적으로 요청하기 전까지 r21 실사용 앱 설치 제거·전환 권유하지 않음**.
+
+---
+
 ## 2026-10-15 08:24 KST — PERSONAL GOLDEN PHYSICAL PASS: v1.0.10 LOCKED
 
 - **가장 최신 최우선 상태:** 사용자가 `오케이 청취모드도 작동하고`라고 직접 확인. 새 스크린샷: `주현팟` 개인용 앱 정상 표시, 배터리 100%, 청취 모드 4버튼. 기존 즉시 홈 튕김 없음.
