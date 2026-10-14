@@ -10,6 +10,7 @@ on:
       - "ci/repair_personal_core_v105.py"
       - "ci/repair_personal_ui_v106.py"
       - "ci/repair_personal_activity_v107.py"
+      - "ci/repair_personal_oneear_v108.py"
 permissions:
   contents: write
 jobs:
@@ -37,17 +38,19 @@ jobs:
           set -euo pipefail
           SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
           cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
-          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
           sha256sum "$SRC/LibrePodsApplication.kt" >> input/PRISTINE_ENGINE_SHA256.txt
           python3 ci/repair_korean_onboarding_and_service.py input/app_source
           cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
           python3 ci/repair_personal_ui_v106.py input/app_source
           python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10007' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10008' input/app_source/android/app/build.gradle.kts
           echo "AUDITED_SINGLE_BIND_LIFECYCLE=PASS"
           ! grep -F 'Last updated: 20 June 2026' "$SRC/presentation/screens/onboarding/PrivacyPolicyPage.kt"
-          echo "PRISTINE_BLUETOOTH_AACP_ATT_BLE_SERVICE_BYTE_FOR_BYTE=PASS"
+          echo "PRISTINE_BLUETOOTH_AACP_ATT_BLE_ALL_OTHER_SERVICES_BYTE_FOR_BYTE=PASS"
+          echo "AIRPODSSERVICE_EXACT_4_NULL_GUARDS_ONLY=PASS"
       - name: Install supported Android 36 SDK / NDK 28
         run: |
           set -euo pipefail
@@ -67,7 +70,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_v1.0.7_CORE_PRESERVED_LIFECYCLE_FIX.apk
+          APK=dist/My_AirPods5_v1.0.8_SINGLE_EAR_LIFECYCLE_BATTERY_GUARD.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -75,7 +78,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "Compiled v1.0.7: archived Bluetooth/AACP/ATT/BLE/service/receiver/data/Application SHA-preserved; fixed MainActivity Compose rebind feedback loop, guarded ViewModel one-time init and empty ANC control packet. Physical AirPods battery/ANC pending; per-run debug signer requires user-controlled reinstall of the broken PERSONAL app only. Do not remove the working original LibrePods." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "v1.0.8: original Bluetooth/AACP/ATT/BLE and other services SHA-preserved; MainActivity one-shot bind guard, ViewModel init once, AirPodsService precisely 4 null-safety guards and missing right-ear battery list, without changing ANC logic. Physical battery/ANC pending. Per-run debug signer. Never remove working original LibrePods." > dist/DEVICE_TEST_REQUIRED.txt
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
       - name: Publish APK as free prerelease
         env:
@@ -83,5 +86,5 @@ jobs:
         run: |
           set -euo pipefail
           TAG="my-airpods5-test-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.7 lifecycle bugfix" --notes "Actual APK compiled from GPL source; froze original Bluetooth/AACP/ATT/BLE/service by SHA. MainActivity removes repeated bind on Compose recomposition, guards duplicate ViewModel init and empty control packet crash. Korean UI and no support links. Physical validation pending. APK debug signing ephemeral; keep working original LibrePods." --prerelease
+          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.8 lifecycle + one-ear crash guards" --notes "Compiled GPL source. SHA-frozen original Bluetooth/AACP/ATT/BLE, targeted MainActivity Compose rebind and 4 AirPodsService optional single-ear battery guards; unchanged noise-control commands. Korean UI. Galaxy physical test pending. CI debug signing ephemeral; keep working original LibrePods." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
