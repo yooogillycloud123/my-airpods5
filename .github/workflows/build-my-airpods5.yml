@@ -7,6 +7,7 @@ on:
       - ".github/workflows/build-my-airpods5.yml"
       - "My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip"
       - "ci/repair_personal_core_v104.py"
+      - "ci/repair_personal_core_v105.py"
 permissions:
   contents: write
 jobs:
@@ -34,8 +35,9 @@ jobs:
           set -euo pipefail
           python3 ci/repair_korean_onboarding_and_service.py input/app_source
           python3 ci/repair_personal_core_v104.py input/app_source
+          python3 ci/repair_personal_core_v105.py input/app_source
           python3 -m py_compile ci/repair_personal_core_v104.py
-          grep -F 'versionCode = 10004' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10005' input/app_source/android/app/build.gradle.kts
           ! grep -F 'Last updated: 20 June 2026' input/app_source/android/app/src/main/java/me/kavishdevar/librepods/presentation/screens/onboarding/PrivacyPolicyPage.kt
       - name: Install supported Android 36 SDK / NDK 28
         run: |
@@ -56,7 +58,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_Korean_v1.0.4_SINGLE_EAR_GUARD_SOURCE_TEST.apk
+          APK=dist/My_AirPods5_Korean_v1.0.5_SINGLE_EAR_LIFECYCLE_CANDIDATE.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -64,7 +66,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "Source/CI candidate only: NOT physical device PASS. One-ear guards and GPL personal premium-local UI do NOT prove AACP control/socket/ANC operation. Debug signing is NOT stable across runs: do NOT uninstall or clear app data to install this candidate." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "Single ear crash paths patched, permission-resume retry added. AACP/socket & ANC remain unverified physically. Signing per build ephemeral; never force uninstall of previous app without explicit consent." > dist/DEVICE_TEST_REQUIRED.txt
       - name: Publish APK as free prerelease
         env:
           GH_TOKEN: ${{ github.token }}
