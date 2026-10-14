@@ -1,5 +1,8 @@
 # 내 에어팟 5 · My AirPods 5 (Korean LibrePods Edition)
 
+> **필독 / 최상위 영구 지침:** [MY_AIRPODS5_PERMANENT_READ_FIRST_20261015.md](MY_AIRPODS5_PERMANENT_READ_FIRST_20261015.md) — 원본 성공 엔진 바이트 동결, UI만 한글화, 요청마다 실제 APK 빌드·정적 검사·다운로드 링크까지 제출. 빌드 성공과 실기 성공 구분. 이전 v1.0.3–v1.0.5 기능 회귀와 서명 불일치 주의.
+
+
 이 저장소는 **원본 [LibrePods](https://github.com/librepods-org/librepods)의 GPL-3.0-or-later 오픈소스 Android 앱**을 기반으로 한 별도 한국어 에어팟 5 앱을 빌드하기 위한 공개 저장소입니다.
 
 - 패키지: `com.myairpods5.personal`
