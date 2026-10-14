@@ -132,10 +132,10 @@ print("FIX_OK", "source_version_10004")
 import re
 service_path = base / "services/AirPodsService.kt"
 service = service_path.read_text(encoding="utf-8")
-unsafe = (r"batteryNotification\\.getBattery\\(\\)\\s*"
-          r"\\.find \\{ it\\.component == BatteryComponent\\.LEFT \\}\\?\\.level!!\\.coerceAtMost\\(\\s*"
-          r"batteryNotification\\.getBattery\\(\\)\\s*"
-          r"\\.find \\{ it\\.component == BatteryComponent\\.RIGHT \\}\\?\\.level!!\\s*\\)")
+unsafe = (r"batteryNotification\.getBattery\(\)\s*"
+          r"\.find \{ it\.component == BatteryComponent\.LEFT \}\?\.level!!\.coerceAtMost\(\s*"
+          r"batteryNotification\.getBattery\(\)\s*"
+          r"\.find \{ it\.component == BatteryComponent\.RIGHT \}\?\.level!!\s*\)")
 service, remaining = re.subn(unsafe, "safeVisibleBatteryLevel()", service)
 if remaining != 3:
     raise RuntimeError(f"Expected 3 additional one-bud takeover crash paths, found {remaining}")
