@@ -1,0 +1,124 @@
+name: AA Golden Capsule - FREE PUBLIC Runner (private source)
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'Source branch in private Golden Capsule repository'
+        required: true
+        default: 'main'
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-aa-golden-capsule.yml'
+permissions:
+  contents: read
+jobs:
+  build-original-signer:
+    if: github.repository == 'yooogillycloud123/my-airpods5'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      AA_PRIVATE_SOURCE_PAT: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
+      AA_SIGN_JKS_BASE64: ${{ secrets.AA_SIGN_JKS_BASE64 }}
+      AA_SIGN_STORE_PASS: ${{ secrets.AA_SIGN_STORE_PASS }}
+      AA_SIGN_KEY_PASS: ${{ secrets.AA_SIGN_KEY_PASS }}
+      AA_SIGN_KEY_ALIAS: ${{ secrets.AA_SIGN_KEY_ALIAS }}
+    steps:
+      - name: Validate private source access (no secrets printed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$AA_PRIVATE_SOURCE_PAT" ]; then
+            echo "::error title=PRIVATE_SOURCE_TOKEN_REQUIRED::Configure AA_PRIVATE_SOURCE_PAT as a private-repository CONTENTS:READ token in PUBLIC builder repo Actions Secrets. Public runner cannot read private code with its default GITHUB_TOKEN."
+            exit 42
+          fi
+      - name: Get exact Golden Capsule sources from PRIVATE repository
+        uses: actions/checkout@v4
+        with:
+          repository: yooogillycloud123/aa-airpods-golden-capsule
+          ref: ${{ inputs.source_ref || 'main' }}
+          token: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
+          persist-credentials: false
+          path: golden-src
+      - name: Java 17 for Android 36
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Gradle 9.4.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.4.0'
+          cache-disabled: true
+      - name: Protect imported Golden exact blobs, owner constraints
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 qa/golden_capsule_migration_freeze.py
+          python3 qa/oneapp-controller/verify_golden_capsule_readonly.py
+          python3 qa/oneapp-controller/verify_embedded_golden_b.py
+      - name: Immutable focus lifecycle host regression
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
+          mkdir -p "$RUNNER_TEMP/focus_host"
+          javac --release 17 -d "$RUNNER_TEMP/focus_host" "$SRC/OneApp2GoldenMechanics.java" "$SRC/OneApp2UniversalController.java" "$SRC/OneApp2MediaOwnerSnapshot.java" "$SRC/OneApp2RepeatFocusPlanner.java" qa/oneapp-controller/OneApp2RepeatFocusPlannerTest.java
+          java -cp "$RUNNER_TEMP/focus_host" com.aaairpods.bridge.OneApp2RepeatFocusPlannerTest
+      - name: Install Android 36 SDK, NDK 27, CMake 3.22 and compile-only stubs
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools' 'cmake;3.22.1' 'ndk;27.0.12077973'
+          mkdir -p "$RUNNER_TEMP/classes"
+          javac --release 17 -cp "$ANDROID_HOME/platforms/android-36/android.jar" -d "$RUNNER_TEMP/classes" r25-hidden-stubs/android/media/AudioFocusInfo.java r25-hidden-stubs/android/media/audiopolicy/AudioPolicy.java
+          jar cf aa-airpods-bridge-v01/r25-hidden-api-stubs.jar -C "$RUNNER_TEMP/classes" .
+      - name: Compile exact v26080 AA Golden Capsule production source
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p aa-airpods-bridge-v01 :app:compileProductionDebugJavaWithJavac --no-daemon --stacktrace
+      - name: Verify original update-install signing identity exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$AA_SIGN_JKS_BASE64" ] || [ -z "$AA_SIGN_STORE_PASS" ] || [ -z "$AA_SIGN_KEY_PASS" ]; then
+            echo "::error title=ORIGINAL_SIGNING_KEY_REQUIRED::Exact original R25 signing certificate is required to preserve installed com.aaairpods.r25fix data. Do NOT ship an alternate-signed APK."
+            exit 43
+          fi
+      - name: Build signed production APK with original signer ONLY
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          export AA_SIGN_STORE="$RUNNER_TEMP/aa-r25-original.jks"
+          printf '%s' "$AA_SIGN_JKS_BASE64" | base64 -d > "$AA_SIGN_STORE"
+          chmod 600 "$AA_SIGN_STORE"
+          export AA_SIGN_KEY_ALIAS="${AA_SIGN_KEY_ALIAS:-aaairpods}"
+          gradle -p aa-airpods-bridge-v01 :app:assembleProductionDebug --no-daemon --stacktrace
+          APK=aa-airpods-bridge-v01/app/build/outputs/apk/production/debug/app-production-debug.apk
+          test -s "$APK"
+          unzip -t "$APK" | tail -n 1
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/apk-signer.txt"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' "$RUNNER_TEMP/apk-signer.txt"
+          grep -Fqi 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23' "$RUNNER_TEMP/apk-signer.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "package: name='com.aaairpods.r25fix'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='26080'" "$RUNNER_TEMP/badging.txt"
+          python3 qa/golden_capsule_verify_apk.py "$APK"
+          mkdir -p dist
+          cp "$APK" dist/AA_AirPods_v26080_ORIGINAL_SIGNED_READONLY_CANDIDATE_NOT_FINAL.apk
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+          printf 'CODE=BUILT STATIC=PASS VEHICLE=NOT_TESTED CAPSULE_HELPER_MANAGER=NOT_IMPLEMENTED\n' > dist/BUILD_STATUS.txt
+      - name: Upload verified signed candidate (never publish private source)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AA_GOLDEN_v26080_SIGNED_READONLY_NOT_FINAL
+          path: golden-src/dist/*
+          if-no-files-found: error
