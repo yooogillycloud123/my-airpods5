@@ -7,10 +7,6 @@ on:
         required: true
         default: 'main'
         type: string
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/build-aa-golden-capsule.yml'
 permissions:
   contents: read
 jobs:
@@ -18,14 +14,10 @@ jobs:
     if: github.repository == 'yooogillycloud123/my-airpods5'
     runs-on: ubuntu-24.04
     timeout-minutes: 80
-    env:
-      AA_PRIVATE_SOURCE_PAT: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
-      AA_SIGN_JKS_BASE64: ${{ secrets.AA_SIGN_JKS_BASE64 }}
-      AA_SIGN_STORE_PASS: ${{ secrets.AA_SIGN_STORE_PASS }}
-      AA_SIGN_KEY_PASS: ${{ secrets.AA_SIGN_KEY_PASS }}
-      AA_SIGN_KEY_ALIAS: ${{ secrets.AA_SIGN_KEY_ALIAS }}
     steps:
       - name: Validate private source access (no secrets printed)
+        env:
+          AA_PRIVATE_SOURCE_PAT: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
         shell: bash
         run: |
           set -euo pipefail
@@ -85,6 +77,10 @@ jobs:
           set -euo pipefail
           gradle -p aa-airpods-bridge-v01 :app:compileProductionDebugJavaWithJavac --no-daemon --stacktrace
       - name: Verify original update-install signing identity exists
+        env:
+          AA_SIGN_JKS_BASE64: ${{ secrets.AA_SIGN_JKS_BASE64 }}
+          AA_SIGN_STORE_PASS: ${{ secrets.AA_SIGN_STORE_PASS }}
+          AA_SIGN_KEY_PASS: ${{ secrets.AA_SIGN_KEY_PASS }}
         shell: bash
         run: |
           set -euo pipefail
@@ -93,6 +89,11 @@ jobs:
             exit 43
           fi
       - name: Build signed production APK with original signer ONLY
+        env:
+          AA_SIGN_JKS_BASE64: ${{ secrets.AA_SIGN_JKS_BASE64 }}
+          AA_SIGN_STORE_PASS: ${{ secrets.AA_SIGN_STORE_PASS }}
+          AA_SIGN_KEY_PASS: ${{ secrets.AA_SIGN_KEY_PASS }}
+          AA_SIGN_KEY_ALIAS: ${{ secrets.AA_SIGN_KEY_ALIAS }}
         working-directory: golden-src
         shell: bash
         run: |
