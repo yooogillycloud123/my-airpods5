@@ -198,10 +198,10 @@ swap("MainActivity.kt",
     "record_viewmodel_init_complete")
 
 swap("MainActivity.kt",
-    '''                Log.e("MainActivity", "Could not bind AirPodsService", e)
+    '''            Log.e("MainActivity", "Could not bind AirPodsService", e)
         }
     }''',
-    '''                Log.e("MainActivity", "Could not bind AirPodsService", e)
+    '''            Log.e("MainActivity", "Could not bind AirPodsService", e)
             AirPodsCrashDiary.mark(context, "BIND_EXCEPTION " + e.toString())
         }
     }''',
