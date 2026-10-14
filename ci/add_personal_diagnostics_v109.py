@@ -220,7 +220,7 @@ g=gradle.read_text(encoding="utf-8")
 assert g.count('versionCode = 10008')==1
 assert g.count('versionName = "1.0.8-single-ear-safe"')==1
 g=g.replace('versionCode = 10008','versionCode = 10009',1)
-g=g.replace('versionName = "1.0.8-single-ear-safe"','versionName = "1.0.9-forensic-log",1)
+g=g.replace('versionName = "1.0.8-single-ear-safe"','versionName = "1.0.9-forensic-log"',1)
 gradle.write_text(g,encoding="utf-8")
 print("DIAG_V109_VERSION=PASS")
 assert (base/"bluetooth").is_dir()
