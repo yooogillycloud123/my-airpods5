@@ -11,6 +11,8 @@ on:
       - "ci/repair_personal_ui_v106.py"
       - "ci/repair_personal_activity_v107.py"
       - "ci/repair_personal_oneear_v108.py"
+      - "ci/add_personal_diagnostics_v109.py"
+      - "ci/Capture-MyAirPods5-SystemCrash.ps1"
 permissions:
   contents: write
 jobs:
@@ -45,8 +47,11 @@ jobs:
           python3 ci/repair_personal_ui_v106.py input/app_source
           python3 ci/repair_personal_activity_v107.py input/app_source
           python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 -m py_compile ci/add_personal_diagnostics_v109.py
+          test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10008' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10009' input/app_source/android/app/build.gradle.kts
           echo "AUDITED_SINGLE_BIND_LIFECYCLE=PASS"
           ! grep -F 'Last updated: 20 June 2026' "$SRC/presentation/screens/onboarding/PrivacyPolicyPage.kt"
           echo "PRISTINE_BLUETOOTH_AACP_ATT_BLE_ALL_OTHER_SERVICES_BYTE_FOR_BYTE=PASS"
@@ -70,7 +75,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_v1.0.8_SINGLE_EAR_LIFECYCLE_BATTERY_GUARD.apk
+          APK=dist/My_AirPods5_v1.0.9_CRASH_LOG_CAPTURE.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -78,7 +83,8 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "v1.0.8: original Bluetooth/AACP/ATT/BLE and other services SHA-preserved; MainActivity one-shot bind guard, ViewModel init once, AirPodsService precisely 4 null-safety guards and missing right-ear battery list, without changing ANC logic. Physical battery/ANC pending. Per-run debug signer. Never remove working original LibrePods." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "v1.0.9 FORENSIC build. NO audio-routing speculation. Java fatal stack traces and on-device life-cycle records auto-saved, copy/share Korean dialog on every app open. If system/native crash or Activity closed without Java exception, capture adb logcat with the included PowerShell script. Physical runtime not verified. Per-run ephemeral signer requires reinstall of broken personal app; keep working LibrePods." > dist/DEVICE_TEST_REQUIRED.txt
+          cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
       - name: Publish APK as free prerelease
         env:
@@ -86,5 +92,5 @@ jobs:
         run: |
           set -euo pipefail
           TAG="my-airpods5-test-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.8 lifecycle + one-ear crash guards" --notes "Compiled GPL source. SHA-frozen original Bluetooth/AACP/ATT/BLE, targeted MainActivity Compose rebind and 4 AirPodsService optional single-ear battery guards; unchanged noise-control commands. Korean UI. Galaxy physical test pending. CI debug signing ephemeral; keep working original LibrePods." --prerelease
+          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.9 forensic crash capture" --notes "DIAGNOSTICS NOT FIX CLAIM: app stores Java uncaught stack traces locally and shows Korean 1-tap copy/share on launch. Existing v1.0.8 Bluetooth/AACP/ATT/BLE engine unchanged. If no Java fatal, included read-only ADB system logcat collector. Physical test pending. APK signer is ephemeral; do not uninstall working LibrePods." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
