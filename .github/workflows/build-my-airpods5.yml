@@ -41,7 +41,7 @@ jobs:
           SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
           cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
           find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
-          sha256sum "$SRC/LibrePodsApplication.kt" >> input/PRISTINE_ENGINE_SHA256.txt
+          # Application installs the forensics exception handler; its SHA is intentionally changed.
           python3 ci/repair_korean_onboarding_and_service.py input/app_source
           cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
           python3 ci/repair_personal_ui_v106.py input/app_source
