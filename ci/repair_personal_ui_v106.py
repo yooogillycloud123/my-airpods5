@@ -24,6 +24,10 @@ end = s.index('        Spacer(modifier = Modifier.height(20.dp))', start)
 s = s[:start] + s[end:]
 start = s.index('    StyledBottomSheet(\n        visible = contactBottomSheet.value,')
 s = s[:start] + '}\n'
+# Hide the original developer's stale premium support email banner.
+start = s.index('        if (state.timeUntilFOSSPremiumExpiry > 0L) {')
+end = s.index('        StyledToggle(', start)
+s = s[:start] + s[end:]
 s = s.replace('                        "Save",', '                        "저장",')
 s = s.replace('                        "Cancel",', '                        "취소",')
 assert not any(x in s for x in ('kavish.xyz', 'discord.gg', 'librepods/issues/new'))
