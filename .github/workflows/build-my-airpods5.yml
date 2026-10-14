@@ -12,6 +12,7 @@ on:
       - "ci/repair_personal_activity_v107.py"
       - "ci/repair_personal_oneear_v108.py"
       - "ci/add_personal_diagnostics_v109.py"
+      - "ci/fix_evidenced_videoview_badtoken_v110.py"
       - "ci/Capture-MyAirPods5-SystemCrash.ps1"
 permissions:
   contents: write
@@ -34,7 +35,7 @@ jobs:
           unzip -q "$FILE" -d input
           test -s input/app_source/LICENSE
           grep -F 'applicationId = "com.myairpods5.personal"' input/app_source/android/app/build.gradle.kts
-      - name: Restore pristine functional Bluetooth/ANC/battery core; patch Korean UI ONLY
+      - name: Restore verified original AACP engine; patch real VideoView BadToken crash
         shell: bash
         run: |
           set -euo pipefail
@@ -48,10 +49,14 @@ jobs:
           python3 ci/repair_personal_activity_v107.py input/app_source
           python3 ci/repair_personal_oneear_v108.py input/app_source
           python3 ci/add_personal_diagnostics_v109.py input/app_source
-          python3 -m py_compile ci/add_personal_diagnostics_v109.py
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py
           test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10009' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10010' input/app_source/android/app/build.gradle.kts
+          ! grep -F 'android.resource://me.kavishdevar.librepods' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          echo 'REAL_BADTOKEN_VIDEO_URI_AND_HANDLER=PASS'
           echo "AUDITED_SINGLE_BIND_LIFECYCLE=PASS"
           ! grep -F 'Last updated: 20 June 2026' "$SRC/presentation/screens/onboarding/PrivacyPolicyPage.kt"
           echo "PRISTINE_BLUETOOTH_AACP_ATT_BLE_ALL_OTHER_SERVICES_BYTE_FOR_BYTE=PASS"
@@ -75,7 +80,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_v1.0.9_CRASH_LOG_CAPTURE.apk
+          APK=dist/My_AirPods5_v1.0.10_BADTOKEN_VIDEO_URI_FIX.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           # Verify the DEX, not merely source text, actually contains the crash recorder.
@@ -87,7 +92,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "v1.0.9 FORENSIC build. NO audio-routing speculation. Java fatal stack traces and on-device life-cycle records auto-saved, copy/share Korean dialog on every app open. If system/native crash or Activity closed without Java exception, capture adb logcat with the included PowerShell script. Physical runtime not verified. Per-run ephemeral signer requires reinstall of broken personal app; keep working LibrePods." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "v1.0.10 CRASH FIX FROM REAL USER STACK: android.widget.VideoView onError causes WindowManager BadTokenException on a service overlay. Both video resource URIs must use applicationId at runtime; both error handlers consume default invalid Activity dialog. Actual battery/ANC physical verification pending. On-device local Java crash evidence retained. Original LibrePods should not be uninstalled. Different per-run debug signer." > dist/DEVICE_TEST_REQUIRED.txt
           cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
       - name: Publish APK as free prerelease
@@ -96,5 +101,5 @@ jobs:
         run: |
           set -euo pipefail
           TAG="my-airpods5-test-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.9 forensic crash capture" --notes "DIAGNOSTICS NOT FIX CLAIM: app stores Java uncaught stack traces locally and shows Korean 1-tap copy/share on launch. Existing v1.0.8 Bluetooth/AACP/ATT/BLE engine unchanged. If no Java fatal, included read-only ADB system logcat collector. Physical test pending. APK signer is ephemeral; do not uninstall working LibrePods." --prerelease
+          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.10 real VideoView BadToken crash fix" --notes "Fixed real 2026-10-15 user stack WindowManager.BadTokenException at android.widget.VideoView onError. PopupWindow and IslandWindow wrongly used original me.kavishdevar.librepods in android.resource URI despite runtime applicationId com.myairpods5.personal. Now use context.packageName and consume playback errors to prevent invalid default dialog. Bluetooth/AACP/ANC command code unchanged. In-app crash logging retained. Real device validation pending. CI debug signer rotates; never delete the working LibrePods." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
