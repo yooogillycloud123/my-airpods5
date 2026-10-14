@@ -2,7 +2,7 @@ name: My AirPods 5 - FREE public GitHub source APK build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, airpods-personal-v111-updater-diagnostics]
     paths:
       - ".github/workflows/build-my-airpods5.yml"
       - "My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip"
@@ -13,6 +13,8 @@ on:
       - "ci/repair_personal_oneear_v108.py"
       - "ci/add_personal_diagnostics_v109.py"
       - "ci/fix_evidenced_videoview_badtoken_v110.py"
+      - "ci/patch_personal_v111_updater_logs.py"
+      - "ci/PersonalUpdateManager_v111.kt"
       - "ci/Capture-MyAirPods5-SystemCrash.ps1"
 permissions:
   contents: write
@@ -50,10 +52,11 @@ jobs:
           python3 ci/repair_personal_oneear_v108.py input/app_source
           python3 ci/add_personal_diagnostics_v109.py input/app_source
           python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
           python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py
           test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10010' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10011' input/app_source/android/app/build.gradle.kts
           ! grep -F 'android.resource://me.kavishdevar.librepods' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
           grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
           echo 'REAL_BADTOKEN_VIDEO_URI_AND_HANDLER=PASS'
@@ -80,7 +83,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_v1.0.10_BADTOKEN_VIDEO_URI_FIX.apk
+          APK=dist/My_AirPods5_v1.0.11_UPDATE_SETTINGS_DIAGNOSTICS_BETA.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           # Verify the DEX, not merely source text, actually contains the crash recorder.
@@ -92,7 +95,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "v1.0.10 CRASH FIX FROM REAL USER STACK: android.widget.VideoView onError causes WindowManager BadTokenException on a service overlay. Both video resource URIs must use applicationId at runtime; both error handlers consume default invalid Activity dialog. Actual battery/ANC physical verification pending. On-device local Java crash evidence retained. Original LibrePods should not be uninstalled. Different per-run debug signer." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "v1.0.11 ISOLATED BETA: base r21 golden protocol frozen; adds Settings update check and local crash logs, removes startup popup. SHA256/certificate/package verified before APK installer. No stable signing configured on CI: THIS APK CANNOT UPDATE INSTALLED GOLDEN r21 IN PLACE. Never uninstall user-verified r21 to test a beta. Physical regression unknown. Charging-case find-my beep NOT implemented." > dist/DEVICE_TEST_REQUIRED.txt
           cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
       - name: Publish APK as free prerelease
@@ -100,6 +103,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="my-airpods5-test-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.10 real VideoView BadToken crash fix" --notes "Fixed real 2026-10-15 user stack WindowManager.BadTokenException at android.widget.VideoView onError. PopupWindow and IslandWindow wrongly used original me.kavishdevar.librepods in android.resource URI despite runtime applicationId com.myairpods5.personal. Now use context.packageName and consume playback errors to prevent invalid default dialog. Bluetooth/AACP/ANC command code unchanged. In-app crash logging retained. Real device validation pending. CI debug signer rotates; never delete the working LibrePods." --prerelease
+          TAG="my-airpods5-v111-lab-r${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/* --title "My AirPods5 v1.0.11 LAB in-app updates and logs menu" --notes "Source-only enhancement candidate. User-verified v1.0.10 GOLDEN r21 stays immutable. Update checks GitHub channel and verifies SHA256/installed cert/package/version; real seamless updates still require persistent signing identity, NOT available for existing r21. Logs moved to Settings. No find-my case beep added. Do not uninstall working r21 just to test beta." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
