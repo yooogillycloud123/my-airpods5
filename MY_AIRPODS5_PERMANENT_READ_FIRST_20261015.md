@@ -1,5 +1,19 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.11 개발 후보 실제 APK 빌드 성공 — GOLDEN 승격 금지
+
+- user-verified GOLDEN r21 v1.0.10 remains unchanged. User confirmed 4/4 listening modes real PASS.
+- Candidate branch `airpods-personal-v111-updater-diagnostics`, CI run `38656036301` PASS. Also first baseline candidate CI `38655706739` PASS.
+- **Lab APK**: `https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-v111-lab-r23/My_AirPods5_v1.0.11_UPDATE_SETTINGS_DIAGNOSTICS_BETA.apk`; package `com.myairpods5.personal`, versionCode 10011, APK bytes 51,326,686, SHA256 `2f35bbe14f0adf4b497a75f67133894853517a8b8c9feb093897923b815d3b22`, signer SHA256 `9281f7ccbfe5e17c3fc9471661b62740a3d56e91bf0cb497540268f65a72b675`.
+- Golden r21 signer SHA256 `f063dddd4b2621e89fde407cc2e66c6ce8a2ef69b892b54861545e6c166c77d0` **DIFFERS** from v1.0.11 beta. **Cannot upgrade GOLDEN in place!** Signing key was not preserved in r21. As the user wishes to keep their verified installation, DO NOT propose deleting it merely to run candidate. User must explicitly authorize one-time personal app migration after secure permanent signing is configured.
+- v1.0.11 implementation `Settings→내 에어팟 5 관리→앱 업데이트 확인` checks channel `main/update-channel.json`, compares package/version/signature, optionally downloads and SHA-256 + APK cert verifies then launches Android installer; on signer mismatch refuses rather than attempt destructive install.
+- `Settings→내 에어팟 5 관리→오류 기록` enables on-demand log copy/share; crash listener still alive, **every-launch diagnosis popup removed**; on-device reporter header now shows actual versionName.
+- GitHub Actions branch optional secure signing via `AIRPODS_SIGNER_BASE64`, `AIRPODS_SIGNER_STORE_PASSWORD`, `AIRPODS_SIGNER_KEY_ALIAS`, `AIRPODS_SIGNER_KEY_PASSWORD` secrets. **Repository connectors in this chat do not support secrets administration**; no claim that secrets are present. The release includes `SIGNING_STATE.txt`, and actual certificate mismatch proves seamless upgrade NOT DONE.
+- Apple case speaker Find My researched: only AirPods 5 Wireless Charging Case (case A3530) has speaker, standard case A3529 no speaker. Upstream Find My case play sound planned, not implemented. PR #764 charging case sound toggle (`IN_CASE_TONE_CONFIG`) ≠ Find My locator beep. No false feature claims.
+- **Required next technical stage**: securely create and persist release signing key under private GH Actions secret; ensure same signer across >=2 signed test APKs, one-time authorized migration from r21, real in-app update success on Galaxy; only then label OTA PASS and consider case speaker opcode research. No AUTO-DELETION.
+
+---
+
 ## 2026-10-15 다음 우선순위 확정 — 안전한 앱내 업데이트 → 로그 메뉴 이전 → 케이스 찾기 소리
 
 - USER-PASS 업데이트: **4개 청취 모드 전부 실제 작동** (`끔/주변음 허용/적응형/노이즈 캔슬링`). 기존 v1.0.10 GOLDEN release `my-airpods5-test-r21` 그대로 고정. 사용자의 현재 설치본 삭제/데이터 제거/서명 변경 요청 금지.
