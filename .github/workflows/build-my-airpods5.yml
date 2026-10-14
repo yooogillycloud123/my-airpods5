@@ -45,7 +45,6 @@ jobs:
         working-directory: input/app_source/android
         run: |
           set -euo pipefail
-          python3 ../../../tools/repair_ko_onboarding.py ..
           chmod +x ./gradlew
           ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --stacktrace --console=plain --max-workers=2
       - name: Verify APK and signer
