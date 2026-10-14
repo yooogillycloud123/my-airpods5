@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "packageName": "com.myairpods5.personal",
+  "versionCode": 10010,
+  "versionName": "1.0.10 GOLDEN · user verified",
+  "apkUrl": "https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-test-r21/My_AirPods5_v1.0.10_BADTOKEN_VIDEO_URI_FIX.apk",
+  "sha256": "b46c8e38f28332f7af0f98bce7b8b27234f62a83d103363cf0697a2fd127445b",
+  "signerSha256": "f063dddd4b2621e89fde407cc2e66c6ce8a2ef69b892b54861545e6c166c77d0",
+  "status": "golden_locked_no_new_update",
+  "note": "Only publish versionCode > 10010 after cert/sha and physical regression validation. Golden v1.0.10 must not be replaced."
+}
