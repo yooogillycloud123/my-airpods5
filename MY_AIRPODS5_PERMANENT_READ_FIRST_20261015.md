@@ -1,5 +1,17 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 08:11 실측 Java Fatal 확정 → v1.0.10 정확한 크래시 수정 / APK 산출
+
+- 사용자가 v1.0.9 앱 `로그 복사`로 보고한 원문: `WindowManager$BadTokenException: Unable to add window -- token null is not valid`, `android.widget.VideoView$5.onError(VideoView.java:615)` → `android.app.AlertDialog$Builder.show`, **main thread**, pid 28747/29518/29804/29995/30137에서 반복. `AirPodsViewModel.init COMPLETE` 직후 1~2초 후 동일 종료가 재현됨. **원인은 배터리 값·AACP 통신 크래시가 아니라 Android VideoView 오류 팝업이 Activity token 없는 서비스 오버레이에서 표시되려다가 발생한 것으로 직접 입증**.
+- 원본 소스 `presentation/overlays/PopupWindow.kt`과 `IslandWindow.kt`의 **정확한 결함:** 각각 `android.resource://me.kavishdevar.librepods/`를 비디오 URI에 하드코딩. 복제 앱의 실제 `applicationId=com.myairpods5.personal`과 달라 raw video resource를 찾지 못하는 직접적인 패키지 불일치. `VideoView` 기본 `onError` 처리로 토큰 없는 `AlertDialog` 표시 시도 → BadTokenException.
+- 수정 `ci/fix_evidenced_videoview_badtoken_v110.py`: 두 VideoView의 URI를 `android.resource://${context.packageName}/${R.raw.connected/island}`로 변경, 각각 `setOnErrorListener { ...; true }`로 **기본 오류 대화상자 생성 경로를 완전히 차단**하고 비디오 에러는 로그+비디오 숨김으로 격리. 블루투스/AACP/ATT/BLE/노이즈 명령과 배터리 로직은 이 변경에서 미수정. 기존 v1.0.9 앱 내부 Java fatal 로그 수집 기능 유지.
+- CI 빌드 `38652773288`, job `116155300268` PASS; `BUILD SUCCESSFUL in 3m 3s`, `VIDEO_FATAL_PATCH_PASS` 두 곳 PASS, `REAL_BADTOKEN_VIDEO_URI_AND_HANDLER=PASS`, APK ZIP+cert+package 검사 PASS, recorder DEX 검사 PASS.
+- 결과 APK `https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-test-r21/My_AirPods5_v1.0.10_BADTOKEN_VIDEO_URI_FIX.apk`. 릴리스 `my-airpods5-test-r21`, package `com.myairpods5.personal`, versionCode `10010`, 51,310,230 bytes, APK SHA256 `b46c8e38f28332f7af0f98bce7b8b27234f62a83d103363cf0697a2fd127445b`, signer SHA256 `f063dddd4b2621e89fde407cc2e66c6ce8a2ef69b892b54861545e6c166c77d0`.
+- **사용자 실물 검증 대기**: 이 특정 `VideoView$5` → `BadToken` Java Fatal 경로를 차단한 것은 소스/CI 직접 검증; Galaxy에서 실제 앱 유지, ANC, 배터리 정상 동작은 아직 PASS 아님. 이번 빌드도 임시 debug signer가 이전과 다르므로 기존 불량 개인 앱 덮어쓰기 불가할 수 있음; 정상 원본 LibrePods 앱 삭제 금지.
+- 다음 문제 발생 시 v1.0.10에 포함된 `AirPodsCrashDiary`로 **새 스택을 확보한 뒤** 해당 원인만 수정. 이전 v1.0.3~v1.0.8 반복 추정/전면개조는 금지.
+
+---
+
 ## 2026-10-15 08:10 KST — 사용자 v1.0.8 여전히 동일 오류 → **증거 수집 우선 고정**
 
 - 사용자 새 스크린샷에서 실제 배터리 100%/96%, 알림 `주현팟` 및 청취 모드 메뉴는 나타나지만 앱을 누르면 다시 홈으로 튕김. **UI/알림이 보인다는 이유로 제어 성공 또는 종료 원인을 확정하지 말 것.**
