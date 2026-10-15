@@ -1,0 +1,32 @@
+{
+  "pollMs": 25,
+  "edgeThicknessPx": 2,
+  "dwellMs": 220,
+  "cooldownMs": 1200,
+  "targets": {
+    "phone": {
+      "keyboardName": "MX Keys S",
+      "keyboardChannel": 2,
+      "mouseName": "MX Master 3S",
+      "mouseChannel": 2
+    }
+  },
+  "routes": [
+    {
+      "enabled": true,
+      "monitor": "*",
+      "edge": "bottom",
+      "segmentStart": 0.0,
+      "segmentEnd": 1.0,
+      "target": "phone"
+    }
+  ],
+  "returnWarp": {
+    "enabled": true,
+    "monitor": "PRIMARY",
+    "edge": "bottom",
+    "position": 0.5,
+    "insetPx": 8,
+    "detectAfterMs": 700
+  }
+}
