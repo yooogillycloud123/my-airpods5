@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">MX Return</string>
+    <string name="shortcut_slot_1">MX Return - 슬롯 1</string>
+    <string name="shortcut_slot_2">MX Return - 슬롯 2</string>
+    <string name="shortcut_slot_3">MX Return - 슬롯 3</string>
+    <string name="shortcut_slot_1_long">MX Return 슬롯 1 실행</string>
+    <string name="shortcut_slot_2_long">MX Return 슬롯 2 실행</string>
+    <string name="shortcut_slot_3_long">MX Return 슬롯 3 실행</string>
+    <string name="shortcut_on">자동 복귀 켜기</string>
+    <string name="shortcut_off">자동 복귀 끄기</string>
+    <string name="shortcut_on_long">MX Return 자동 복귀 켜기</string>
+    <string name="shortcut_off_long">MX Return 자동 복귀 끄기</string>
+    <string name="accessibility_desc">ChatGPT 앱에서만 물리 키보드를 PC와 동일하게 Enter는 전송, Shift+Enter는 줄바꿈으로 사용합니다. 다른 앱의 키 입력은 처리하지 않습니다.</string>
+    <string name="global_return_service_name">MX Return - PC 복귀 단축키</string>
+    <string name="global_return_accessibility_desc">물리 키보드의 Ctrl+Alt+P만 감지합니다. 마우스 클릭, 휠, 뒤로가기/앞으로가기 버튼은 가로채지 않습니다. OHO+의 MX Return 슬롯 바로가기를 사용하세요. 화면 내용은 읽지 않습니다.</string>
+</resources>
