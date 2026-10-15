@@ -1,0 +1,29 @@
+name: Package MX Return Excel FLOW
+
+on:
+  push:
+    branches:
+      - mxreturn-flow-v040
+    paths:
+      - 'mx-return-flow/excel-vba/**'
+      - '.github/workflows/package-mxflow-excel-vba.yml'
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package VBA integration
+        shell: bash
+        run: |
+          set -e
+          cd mx-return-flow
+          zip -r ../MXReturn_FLOW_Excel_Embedded_VBA.zip excel-vba
+          sha256sum ../MXReturn_FLOW_Excel_Embedded_VBA.zip
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MXReturn_FLOW_Excel_Embedded_VBA
+          path: MXReturn_FLOW_Excel_Embedded_VBA.zip
+          if-no-files-found: error
