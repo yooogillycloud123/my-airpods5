@@ -1,5 +1,14 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 회사 추가테스트 없이 v1.0.17 실제 소스 단계 진행
+- 소스 중심 다음 단계 실제 수행: LibrePods 원본 Android BluetoothCryptography/BLEManager/AACPManager 및 독립 LinuxPods AAP IRK/ENC_KEY 구현을 비교 검증. 이어버드 proximity IRK 및 ENC_KEY와 케이스 Find My owner 인증키는 용도가 달라 혼동하면 안 됨.
+- 별도 LAB 브랜치 `airpods-personal-v111-updater-diagnostics/ci/case_protocol_v117/CaseRpaIdentity.kt`에 Bluetooth AES-128 `ah` 및 RPA 주소 판별을 Kotlin으로 구현, KEY_SOURCE provenance 단계 분리. 8개 독립 오프라인 테스트 PASS(독립 Python cryptography 기준 AES 벡터 포함). GitHub Actions source gate `38683459680` SUCCESS.
+- 신규 `ci/case_protocol_v117/patch_android_lab_case_identity.py`, `.github/workflows/compile-case-rpa-android-v117.yml`에서 LAB 전용 Android 빌드에도 위 Kotlin 파일 통합. 사용자의 앱에 강제 설치하거나 새 소리 기능이라고 말하지 말 것.
+- 인증된 **케이스 자체 IRK / GATT owner auth / 실제 Find My sound characteristic**은 여전히 미확보. 소리 기능 실기 PASS 아님. 결론/소스 경로 `MY_AIRPODS5_V117_CASE_OWNER_IDENTITY_SOURCE_CHECKPOINT_20261015.md` 참조.
+- 회사 사용자에게 반복 BLE 스캔, RSSI 측정, APK 삭제/재설치 요구 금지. 정상 GOLDEN v1.0.10 4모드/배터리, AA Golden 불변.
+
+---
+
 ## 2026-10-15 13:03+ 명확한 기술자료 재검토 완료 — 근거 없는 실기 반복 중단
 - 사용자 회사 근무 중이며, 기존 BLE/RSSI/인식 시험에 이미 많은 시간 소비함. **추가 35초 신호 검색, 거리 실험, APK 재설치, 디버깅 설정 변경 요청 금지**. 과거 수치는 버리지 않고 근거로 사용.
 - Librepods README는 케이스 Find My 소리를 계획/추가 RE 필요라고 표기; AAP Definitions 및 PR764에서 확인한 케이스 소리 명령은 충전 알림 효과음 on/off이지 분실 케이스 삐삐가 아님. Issue718 'AACP play tone' 제안은 closed as not planned이고 실증 소스 없음.
