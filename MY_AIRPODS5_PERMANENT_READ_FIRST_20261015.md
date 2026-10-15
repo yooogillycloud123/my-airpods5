@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.24 실제 설치형 LAB APK 완성(빌드만 PASS) — 케이스 소리 미구현
+- 사용자 요청으로 새 APK 실제 GitHub Actions 빌드. Branch `airpods-personal-v124-case-advert-test-20261015`, run **38719047092 SUCCESS**, signed artifact release **my-airpods5-v124-case-advert-r1**. SHA256 `b23f0deaf7cd32a46a0a2668c3d520e950417d908a382455d7aac9b471d2ed14`. pkg `com.myairpods5.personal.lab` versionCode **10024**, Debug signer SHA `452370d8feda95849415c8a2dc9ebafd6240d14228d512de14c006fa504871a5`.
+- 새 Settings `내 케이스 찾기 연구 v1.0.24` → 사용자가 원할 때만 10초, Pro3 원본 출처 `07 11 06` 독립 케이스 광고 조사/이 LAB 자체 `ENC_KEY`가 있으면 AES 복호화 형식 판별, 없으면 건수만 보고. AirPods **5** 형식·케이스 소유자 인증·케이스 실제 소리 **전부 미확인/미구현**. 기존 읽기전용 v120 메뉴 별도 선택 보존, 음향/GATT 쓰기 없음. 기존 v116 07=0 실측 고려해 반복 시험을 강요하지 말 것.
+- **IMPORTANT:** LAB v122와 v124 인증서가 달라 **덮어쓰기 불가능**할 수 있음. LAB 제거 시 LAB IRK/ENC_KEY 데이터 지워짐. `com.myairpods5.personal` v1.0.10 USER-PARTIAL-BASELINE 절대 삭제/재서명 금지. 당장 케이스 삐삐 기능을 원하면 이 APK가 그 기능을 제공한다고 말하지 말 것.
+- Exact technical record: `MY_AIRPODS5_V124_INSTALLABLE_CASE_RADIO_LAB_20261015.md` on main. GitHub Actions v124 build PASS ≠ AirPods5 케이스 찾기 PASS.
+
+---
+
+
+
 **v123 확장/최신 CI:** 원본 `stuffz/airpods` **AirPods Pro 3** 케이스만 확인된 별도 `07 11 06` 광고+`ENC_KEY` AES 복호화 구현을 OFFLINE 파일 `ci/case_protocol_v123/case_broadcast_evidence.py`로 분리. 이어버드 `IRK`는 해당 케이스 주소를 판별하지 못함(해당 원본 캡처 한정). AirPods **5** 동일 방식 여부 미검증, 소유자 인증/실제 찾기 사운드와 무관. GitHub Actions **38718067357 SUCCESS**, 20 synthetic unit tests PASS; 실제 기기/케이스 소리 PASS 없음. 상세 `MY_AIRPODS5_V123_CASE_SESSION_SOURCE_PROOF_CHECKPOINT_20261015.md` 참조. 새 APK 없음.
 
 ## 2026-10-15 v123 source-only checkpoint — not an APK or case speaker success
