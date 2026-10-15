@@ -1,0 +1,26 @@
+name: AirPods5 case ATT trace extractor offline checks
+on:
+  push:
+    branches: [airpods-personal-v111-updater-diagnostics]
+    paths:
+      - ci/case_protocol_v119/**
+      - .github/workflows/case-att-trace-extractor-v119.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate trace parser using synthetic HCI/ATT packets
+        run: |
+          set -euo pipefail
+          python3 ci/case_protocol_v119/test_extract_att_hci.py
+          python3 -m py_compile ci/case_protocol_v119/extract_att_hci.py
+          ! grep -E 'connectGatt|BluetoothLeScanner|startScan\\(' ci/case_protocol_v119/extract_att_hci.py
+          echo 'OFFLINE_SOURCE_TESTS_PASS_AND_NO_LIVE_RADIO=YES'
+          echo 'CASE_AUDIO_HARDWARE_SUCCESS=NOT_VERIFIED'
