@@ -1,0 +1,83 @@
+name: My AirPods5 v1.0.22 LAB IRK and battery guard
+on:
+  push:
+    branches: [airpods-personal-v111-updater-diagnostics]
+    paths: ['.github/workflows/v122-irk-and-battery.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare source and apply existing frozen patch series
+        run: |
+          set -euo pipefail
+          FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+          echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+          unzip -t "$FILE" | tail -1
+          unzip -q "$FILE" -d input
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
+          python3 ci/patch_v112.py input/app_source "$PWD"
+          python3 ci/patch_v113.py input/app_source "$PWD"
+          python3 ci/patch_v114_unfiltered_case_ble.py input/app_source
+          python3 ci/patch_v115_findmy_radio_audit.py input/app_source "$PWD"
+          python3 ci/patch_v116_observed_rssi.py input/app_source
+          python3 ci/case_protocol_v117/patch_android_lab_case_identity.py input/app_source "$PWD"
+          python3 ci/case_protocol_v120/patch_lab_preflight.py input/app_source "$PWD"
+          python3 ci/case_protocol_v121/patch_lab_permission.py input/app_source
+          python3 ci/case_protocol_v122/patch_lab_irk_battery.py input/app_source
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          grep -F 'versionCode = 10022' input/app_source/android/app/build.gradle.kts
+          grep -F 'ACCESS_COARSE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
+          grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
+          grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
+          grep -F '배터리 데이터 미수신' "$SRC/presentation/components/BatteryView.kt"
+          ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
+          echo 'V122_NO_FALSE_BATTERY_ZERO_IRK_RETRY_PATCH=PASS'
+      - name: Install SDK and compile lab
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "sdk.dir=$ANDROID_HOME" > input/app_source/android/local.properties
+          cd input/app_source/android
+          chmod +x gradlew
+          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --console=plain --max-workers=2
+      - name: Verify signed APK and stage release
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK=dist/My_AirPods5_v1.0.22_BATTERY_IRK_REPAIR_LAB.apk
+          cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
+          unzip -t "$APK" | tail -1
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal.lab'" dist/PACKAGE.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
+          sha256sum "$APK" | tee dist/SHA256.txt
+          cp input/app_source/LICENSE dist/LICENSE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MyAirPods5_v122_battery_irk_lab
+          path: dist/*
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "my-airpods5-v122-lab-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v1.0.22 battery and IRK lab repair' --notes 'Repair falsely rendered 0% on missing battery packets and add key-retry only on already-connected LAB AACP socket. LAB is separate sandbox from working Golden. Does not play case sound. Do not erase Golden.' --prerelease
