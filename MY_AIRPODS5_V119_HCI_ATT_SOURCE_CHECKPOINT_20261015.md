@@ -18,3 +18,8 @@ Synthetic offline tests in `ci/case_protocol_v119/test_extract_att_hci.py` and `
 (1) Credible AirPods 5 charging-case-specific GATT endpoint and identity; (2) owner authentication handshake; (3) actual case-speaker sound request and response with acoustic proof; (4) guarded LAB Android integration; (5) one final physical test. Do not fabricate answers or issue writes to nearby unrelated devices.
 
 USER ACTION: NONE. No repeated BLE/RSSI scans, no installs, no repairement. Golden v1.0.10 immutable; this source utility is not a working case ring APK.
+
+## v119 addendum: trace-to-trace candidate comparison
+- Added `ci/case_protocol_v119/compare_case_sound_sessions.py` in LAB source branch. It consumes existing local baseline vs user-authorized case Find My sound-action btsnoop logs, extracts **observed** ATT write candidates by characteristic UUID/type/length and relative counts, and never assumes a target is an AirPods case. Unknown UUIDs are left unmapped; connection numeric handles are not permanent identifiers. No Bluetooth connection and no outbound commands.
+- This can narrow a future genuine case-owner trace to a candidate command without guesswork. It cannot manufacture a case owner handshake or a sound packet out of existing BLE RSSI summaries, which contain no ATT control payloads.
+- Main milestone remains: obtain a real authenticated AirPods5-case-specific source packet trace before integrating a ring command. Owner nearby third-party Find My examples are NOT enough.
