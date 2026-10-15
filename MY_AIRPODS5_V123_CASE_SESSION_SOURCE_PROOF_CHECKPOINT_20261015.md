@@ -33,3 +33,16 @@
 5. Only then one strictly necessary closed-lid/buds-in/A2DP-disconnected physical audible-beep test.
 
 **Next checkpoint must not claim 'case found/playing' unless actual case-speaker sound is user confirmed.**
+
+## v123 SECOND SOURCE IMPLEMENTATION — independent-case BLE encrypted envelope (offline only)
+
+A newly inspected public **AirPods Pro 3** primary implementation `stuffz/airpods/src/aap/case_advert.hpp` (blob SHA `19c57b85c0ca181d2156e1f564d386ebbe8a2e0d`) and `src/aap/encrypted_payload.hpp` (SHA `9d00ff154e44a9e70af0f6a950409ad5959aa9d2`) reveal an overlooked independent case path:
+- `Apple 0x004C` manufacturer-data exactly `07 11 06 + 16-byte AES-ECB-encrypted block` in their AirPods **Pro 3**, even while lid shut.
+- The case advertiser BLE address does **not** resolve against AACP bud IRK, but the independent case block was decrypted using bud AACP **ENC_KEY**. The two keys are different. This invalidates the **assumption** that an RPA match is required for any independent case discovery; it does **not** contradict the user AirPods5 v116 `07=0` logs or prove their model uses Pro3 protocol.
+- The project validates only three zero slots of decrypted block: bytes 8/10/11. This **cannot cryptographically authenticate ownership** and should be treated as format-compatible *candidate*, especially for untested AirPods5. Header/firmware variant/counter must not be hardcoded to one captured value.
+
+Implemented isolated `ci/case_protocol_v123/case_broadcast_evidence.py`: passive bytes-only Pro3 case envelope + optional *in-memory* ENC_KEY decryption, lid, battery values/absent/charging decoding. It never scans, pairs, writes GATT, connects hardware, exposes raw keys/addresses, or claims AirPods 5/owner/speaker functionality. Source unit tests use **synthetic encrypted data only**, not a real user's device. Source `ci/case_protocol_v123/test_case_broadcast_evidence.py`.
+
+GitHub Actions **38718067357**, job **116365524807**, SHA `62c8c6406ae5276b3af87ca1ecc8a1c89fdb9096` **SUCCESS**: preexisting v119 tests 6+2, v123 HCI session 5, new Pro3-envelope 7 => **20 synthetic/offline tests PASS**. This confirms source logic only; **AirPods5 case identification, authenticated sound command, case beep: NOT IMPLEMENTED/NOT VERIFIED.**
+
+Next source gate: AirPods 5-specific independent advertiser format confirmation *from open, real-source captures*; no repeated user-device scans, v1.0.10 untouched. If same format truly supported, a future stable single-app module may reuse a safely obtained ENC_KEY (in **same UID**) to recognize potential case adverts, while separately solving the case GATT owner-auth and real Find My sound command.
