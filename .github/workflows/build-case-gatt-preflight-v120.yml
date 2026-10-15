@@ -50,7 +50,7 @@ jobs:
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
           grep -F 'applicationId = "com.myairpods5.personal.lab"' input/app_source/android/app/build.gradle.kts
           grep -F 'versionCode = 10020' input/app_source/android/app/build.gradle.kts
-          grep -F 'FindMyRadioAudit.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'CaseOwnerProbeV120.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
           grep -F 'getManufacturerSpecificData(76)' "$SRC/FindMyRadioAudit.kt"
           ! grep -E 'connectGatt|writeCharacteristic' "$SRC/FindMyRadioAudit.kt"
           echo "V120_CASE_IDENTITY_AND_READ_ONLY_GATT=PASS"
