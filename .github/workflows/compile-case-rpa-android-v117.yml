@@ -1,0 +1,85 @@
+name: AirPods5 case owner identity Android compile v117
+on:
+  push:
+    branches:
+      - airpods-personal-v111-updater-diagnostics
+    paths:
+      - .github/workflows/compile-case-rpa-android-v117.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-lab-case-owner-identity-v117:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify immutable source archive
+        run: |
+          set -euo pipefail
+          FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+          echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+          unzip -t "$FILE" | tail -1
+          unzip -q "$FILE" -d input
+          test -s input/app_source/LICENSE
+      - name: Apply frozen proven engine and isolated research UI changes
+        run: |
+          set -euo pipefail
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
+          python3 ci/patch_v112.py input/app_source "$PWD"
+          python3 ci/patch_v113.py input/app_source "$PWD"
+          python3 ci/patch_v114_unfiltered_case_ble.py input/app_source
+          python3 ci/patch_v115_findmy_radio_audit.py input/app_source "$PWD"
+          python3 ci/patch_v116_observed_rssi.py input/app_source
+          python3 ci/case_protocol_v117/patch_android_lab_case_identity.py input/app_source "$PWD"
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          grep -F 'applicationId = "com.myairpods5.personal.lab"' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10017' input/app_source/android/app/build.gradle.kts
+          grep -F 'FindMyRadioAudit.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'getManufacturerSpecificData(76)' "$SRC/FindMyRadioAudit.kt"
+          ! grep -E 'connectGatt|writeCharacteristic' "$SRC/FindMyRadioAudit.kt"
+          echo "V117_CASE_IDENTITY_ANDROID_SOURCE=PASS"
+      - name: Install Android SDK 36 toolchain
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "sdk.dir=$ANDROID_HOME" > input/app_source/android/local.properties
+      - name: Compile Android lab for case identity type-safety; not for installation
+        working-directory: input/app_source/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --stacktrace --console=plain --max-workers=2
+      - name: Verify APK package signature zip and checksum
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK=dist/My_AirPods5_v1.0.17_CASE_IDENTITY_INTERNAL_COMPILE_NOT_FOR_USER.apk
+          cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
+          unzip -t "$APK" | tail -1
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'caseproto/CaseRpaIdentity' >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal.lab'" dist/PACKAGE.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
+          sha256sum "$APK" | tee dist/SHA256.txt
+          cp input/app_source/LICENSE dist/LICENSE.txt
+          echo "INTERNAL LAB CI ONLY; pure Kotlin BLE RPA identity resolver source integrated, no user testing. Case ownership and speaker protocol UNPROVEN; v1.0.10 unchanged." > dist/TEST_SCOPE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CaseRpaAndroidCompiledV117
+          path: dist/*
