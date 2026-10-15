@@ -64,6 +64,7 @@ class AttExtractor:
         self.counter = Counter()
         self.events: list[dict] = []
         self.uuid_by_handle: dict[tuple[int,int],str] = {}
+        self.pending_read_type: dict[int,int] = {}
 
     def add_event(self, frame: int, handle: int, direction: str,
                   event: str, **fields: object) -> None:
@@ -171,6 +172,8 @@ class AttExtractor:
                     "0x%04X" % int.from_bytes(data[3:5], "little")
                 ]
                 fields["requested_type_uuid16"] = "0x%04X" % int.from_bytes(data[5:7], "little")
+                if opcode == 0x08:
+                    self.pending_read_type[handle] = int.from_bytes(data[5:7], "little")
         elif opcode == 0x01 and len(data) >= 5:
             fields["error_for_opcode"] = "0x%02X" % data[1]
             fields["attribute_handle"] = "0x%04X" % int.from_bytes(data[2:4], "little")
@@ -188,7 +191,7 @@ class AttExtractor:
             fields["attribute_row_size"] = data[1]
             fields["records_length"] = len(data) - 2
             row = data[1]
-            if row in (7,21) and (len(data)-2) % row == 0:
+            if row in (7,21) and self.pending_read_type.pop(handle,None) == 0x2803 and (len(data)-2) % row == 0:
                 for i in range(2,len(data),row):
                     att=int.from_bytes(data[i+3:i+5],"little")
                     self.uuid_by_handle[(handle,att)] = self.parse_uuid(data[i+5:i+row])
