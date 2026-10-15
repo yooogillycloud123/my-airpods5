@@ -1,0 +1,58 @@
+name: AirPods5 case chime AACP vs ATT evidence gate v129
+on:
+  push:
+    branches: [airpods-case-chime-source-gate-v129-20261015]
+    paths: ['ci/case_protocol_v129/**', '.github/workflows/case-chime-evidence-v129.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Check legacy HCI and new case chime semantics
+      run: |
+        set -euo pipefail
+        python3 ci/case_protocol_v119/test_extract_att_hci.py
+        python3 ci/case_protocol_v119/test_uuid_map.py
+        python3 ci/case_protocol_v123/test_case_session_evidence.py
+        python3 ci/case_protocol_v128/test_l2cap_owner_trace.py
+        python3 ci/case_protocol_v129/test_case_chime_evidence.py
+        python3 -m py_compile ci/case_protocol_v129/*.py
+        echo 'V129_CASE_CHIME_SOURCE_AUDIT=PASS'
+        echo 'CHARGING_CASE_TONE_CONFIG_IS_NOT_PLAY=CONFIRMED'
+        echo 'A3530_UNPLUGGED_CASE_RING=NOT_IMPLEMENTED'
+    - name: Emit source research package
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        python3 ci/case_protocol_v129/case_chime_evidence.py \
+          --aap '123a0001000800' --aap '123a0001000801' \
+          --aap '0400040009003101000000' \
+          --uuid '4F860002-943B-49EF-BED4-2F730304427A' \
+          --output dist/CHARGE_CHIME_EVIDENCE_V129.json
+        zip -j dist/AirPods5_A3530_CASE_CHIME_V129_SOURCE_AND_EVIDENCE.zip \
+          ci/case_protocol_v129/case_chime_evidence.py \
+          ci/case_protocol_v129/test_case_chime_evidence.py \
+          ci/case_protocol_v129/README.md \
+          dist/CHARGE_CHIME_EVIDENCE_V129.json
+        sha256sum dist/*.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: AirPods5-v129-charge-chime-protocol-research
+        path: dist/*
+    - name: Publish explicit research-only release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        TAG="my-airpods5-v129-charging-tone-source-r${GITHUB_RUN_NUMBER}"
+        gh release create "$TAG" dist/AirPods5_A3530_CASE_CHIME_V129_SOURCE_AND_EVIDENCE.zip dist/CHARGE_CHIME_EVIDENCE_V129.json \
+          --target "$GITHUB_SHA" \
+          --title 'AirPods5 A3530 v129 charging-tone control source audit (NOT CASE BEEP)' \
+          --notes 'Documented case-chime ON/OFF is not PLAY. CAPod says AACP 0x31 effect unknown, case tones via owner ATT. Physical USB ding proven only with power applied. v129 is a source/evidence deliverable, NOT case sound APK; no user install required.'
