@@ -1,5 +1,13 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v119 오프라인 GATT 실제 추출 + 비교 기능 완료
+- LAB 브랜치 `ci/case_protocol_v119/extract_att_hci.py`에 실제 btsnoop H4/ACL/L2CAP/ATT 기록에서 서비스·특성 UUID, ATT 쓰기/응답/알림, BLE 암호화 변경을 추출하는 파서를 구현.
+- 추가 `ci/case_protocol_v119/compare_case_sound_sessions.py`: 인증된 케이스의 실제 소리 버튼 실행 전/후 HCI 캡처가 있으면 관찰된 GATT 제어 명령 후보의 차이만 계산(특성 UUID 우선, 세션별 핸들 무시). 실제 케이스 캡처 **아직 없음**. 현재 BLE RSSI 로그로 케이스 사운드 opcode를 뽑았다고 주장하면 안 됨.
+- 두 소스 모두 **오프라인**, 다른 기기 접속/원격 제어 없음, 기본 출력 개인정보·원문값 제외. GitHub Actions `38693194281` SUCCESS(소스 파싱/합성 데이터 테스트). 상세 문서 `MY_AIRPODS5_V119_HCI_ATT_SOURCE_CHECKPOINT_20261015.md`.
+- 케이스 owner 인증/실제 sound opcode 확보 후에만 설치용 LAB APK/실기 1회. 회사 사용자에게 추가 검사·재설치 요구 금지. 정상 v1.0.10 Golden 불변.
+
+---
+
 ## 2026-10-15 v1.0.19 실코드 소스 기반 ATT/HCI 데이터 추출 도구 완료
 - 사용자의 회사 근무와 이전 과도한 반복을 고려해 신규 앱 설치·35초 BLE/RSSI 반복·재페어링 요청 **없음**. 정상 v1.0.10 GOLDEN 유지.
 - 실물 AirPods5 case Find My 스피커 제어 프로토콜 추정 금지. 실제 소리 재생은 여전히 미구현.
