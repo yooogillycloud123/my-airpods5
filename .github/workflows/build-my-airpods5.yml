@@ -59,8 +59,8 @@ jobs:
           python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py
           test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10012'
-          grep -F 'applicationId = "com.myairpods5.personal.lab"' input/app_source/android/app/build.gradle.kts input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10012' input/app_source/android/app/build.gradle.kts
+          grep -F 'applicationId = "com.myairpods5.personal.lab"' input/app_source/android/app/build.gradle.kts
           ! grep -F 'android.resource://me.kavishdevar.librepods' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
           grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
           echo 'REAL_BADTOKEN_VIDEO_URI_AND_HANDLER=PASS'
