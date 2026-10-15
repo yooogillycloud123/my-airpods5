@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.19 실코드 소스 기반 ATT/HCI 데이터 추출 도구 완료
+- 사용자의 회사 근무와 이전 과도한 반복을 고려해 신규 앱 설치·35초 BLE/RSSI 반복·재페어링 요청 **없음**. 정상 v1.0.10 GOLDEN 유지.
+- 실물 AirPods5 case Find My 스피커 제어 프로토콜 추정 금지. 실제 소리 재생은 여전히 미구현.
+- 새 LAB source `airpods-personal-v111-updater-diagnostics/ci/case_protocol_v119/extract_att_hci.py`: Android `btsnoop_hci.log`(H4) → ACL → L2CAP → ATT/GATT 실제 캡처 프레임 오프라인 해석기. ATT 서비스/특성 UUID 발견 기록과 쓰기/응답/알림, 링크 암호화 이벤트를 구분해서 기록. 신호의 소유 케이스 여부는 UNKNOWN으로 유지. 별도 장치 연결이나 명령 전송 불가능.
+- 개인식별정보 및 raw ATT 값은 기본 출력 제외. 로컬 명시적 private mode만 원문 포함. 과거 사용자 로그에는 authentic case-owner handshake trace가 존재하지 않음.
+- 실험코드 테스트 `test_extract_att_hci.py`, `test_uuid_map.py`, reproducible workflow `case-att-trace-extractor-v119.yml`: GitHub Actions `38692379215` **SUCCESS**, fixture 2종 OK. 정확한 산출물/다음 인증 통신 게이트 `MY_AIRPODS5_V119_HCI_ATT_SOURCE_CHECKPOINT_20261015.md`.
+- 공식 자료: Apple A3530 케이스 Find My 스피커 지원. LibrePods #20/#102는 case GATT owner auth/play case sound 모두 미완료. CAPod v118 case ATT는 케이스 설정이며 AirPods Pro3 CASE_INFO에 제한. AirGuard/OpenTagViewer 성공 제어 예제는 사용자 AirPods5 사례와 다르다. 새 APK 성공이라 말하지 말 것.
+
+---
+
 ## 2026-10-15 v118 CAPod 실제 소스 신규 교차검증
 - CAPod Kotlin `DefaultAapDeviceProfile.kt`: **케이스 효과음은 ATT를 통해 제어**되며 AACP IN_CASE_TONE (0x31) 효과 미확인이라고 직접 표기. `CASE_INFO_REQUEST=0x22` / `CASE_INFO=0x23` 실제 구현은 AirPods Pro3 단독 allowlist (AirPods5 미검증); 케이스 Find My 소리 opcode가 아님.
 - LibrePods #20/#102의 CASE GATT owner 인증 문제와 일치. 따라서 v117 RPA/IRK 코드만으로 사용자의 AirPods5 케이스를 인증하거나 소리 재생할 수 없음.
