@@ -1,0 +1,12 @@
+name: CaseSpeakerProtocolEvidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ci/check_case_speaker_evidence.py']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 ci/check_case_speaker_evidence.py
