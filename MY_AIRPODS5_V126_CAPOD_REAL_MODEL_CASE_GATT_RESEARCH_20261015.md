@@ -31,6 +31,17 @@ A credible trace or source implementation must show **A3530 case separate BLE id
 
 **WORK STATUS: model/battery code changed on LAB branch, synthetic/build tests separate from real user physical confirmation. A3530 owner-auth and sound commands remain UNSOLVED; no truthful successful ringtone APK.**
 
-## CI result transparency (preliminary)
+## VALIDATED FINAL build — 2026-10-15 KST
+- Clean no-duplicate model correction branch commit **10b3132105dc63edaa25b7259a94957771760c5b**; GitHub Actions run **38734032043 SUCCESS**, job **116418654887**.
+- Verified exactly ONE 0x3020 `AirPods 5 (무선 충전 케이스)` and ONE 0x3620 `AirPods 5` in source, previous baseline 0x3020 label was generic.
+- Gradle Android `BUILD SUCCESSFUL in 3m 23s`. v126 offline tests 11 PASS, existing v125 7 + v123 5+7 PASS, total **30** tests. No BLE scan, no GATT case writes, no owner-auth, no audio.
+- Release: https://github.com/yooogillycloud123/my-airpods5/releases/tag/my-airpods5-v126-capod-model-r4
+- Exact signed APK: https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-v126-capod-model-r4/My_AirPods5_v1.0.26_AIRPODS5_MODEL_BATTERY_LAB.apk
+- Package `com.myairpods5.personal.lab`, versionCode `10026`, versionName `1.0.26-capod-model-battery-gate-debug`. APK size **51,425,113 bytes**. SHA256 `a59ba26611a06fc0b6be513bdb53ff7acd9d59c9436ad482c00109c9effe075c`, signer SHA256 `2b4a679afcdce110e1eeaef4a028bc6f575fb8f9a8d325492ae36f1155e3a051`, ZIP integrity PASS. Signer **DIFFERS from v125 and installed v124** -> cannot normal update-install in place; DO NOT ASK USER TO UNINSTALL/REINSTALL FOR UNIMPLEMENTED SPEAKER SOUND.
+- Superseded run **38733312258** produced r3 but had duplicate 0x3020 map. Do not use r3.
+- `AirPodsService.kt` upstream was inspected: it **already saves AACP response IRK/ENC_KEY** into `settings`. LAB missing IRK/ENC_KEY is not solved merely by copying CAPod's persister; actual AACP channel/key response must be received in the LAB app and case *owner GATT* is still a distinct unsolved authentication.
+- Physical battery/model behavior **not user tested**. Actual A3530 case speaker beep **NOT IMPLEMENTED**; this is a model/battery support code result, not ringtone completion.
+
+## CI result transparency (historical)
 - Initial branch action 38733312258 compiled signed LAB but exposed a duplicate 0x3020 mapping from the frozen source; its APK r3 is superseded and must NOT be recommended.
 - Fix commit 10b3132105dc63edaa25b7259a94957771760c5b corrects original 0x3020 label **in-place**, no duplicate. Replacement action 38734032043 is the authoritative candidate; ensure its completed success and signature/hash before offering any APK.
