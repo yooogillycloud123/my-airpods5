@@ -1,5 +1,19 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 10:04+ KST — v1.0.14 실험실 BLE 측정 APK 컴파일 PASS / 실기 확인 필요
+
+- 사용자 승인: 끊지 말고 단계별로 빠르게 개발. **진짜 목표는 두 이어버드 모두 케이스 안, 뚜껑 닫힌 상태, 음악용 블루투스 연결 해제 상태에서도 충전 케이스 자체 스피커의 Find My 소리 호출**. 현재 Android custom 앱 미구현이며 이 사실 숨기지 말 것.
+- v1.0.13 사용자 로그: `기존 Apple 케이스형 07 11 06=0`. 원래 ScanFilter가 Apple 특정 포맷만 전달했고 수신 `total` 숫자도 필터링 후 Apple packet만 세었음. `0`을 전체 Bluetooth 광고가 없다고 해석하면 안 됨.
+- Android Bluetooth 공식문서: 기존 upstream Manifest `BLUETOOTH_SCAN usesPermissionFlags=neverForLocation`은 **일부 BLE beacon 필터링** 가능. v1.0.14 **실험실 패키지만** 해당 플래그를 제거하고 명시적 `ACCESS_FINE_LOCATION`을 선언, 앱 내 한국어 안내 뒤 사용자 동의로 런타임 권한 요청. 앱은 위치 좌표를 조회/저장/전송하지 않음.
+- 새로운 scanner는 35초 `BluetoothLeScanner.startScan(null, low latency)`, 단계별 정직한 집계: **전체 BLE 콜백 → Apple manufacturer(76) → Apple type07 → 과거 케이스형 07 11 06 → 개인 앱 AACP에서 받은 암호화키 구조 복호화 → 2회 동일 BLE 주소 검증**. 개인정보 주소 화면·로그 제외. 실제 사용자 케이스 입증 없는 GATT/소리 명령 금지.
+- 소스 `ci/patch_v114_unfiltered_case_ble.py` 독립 LAB 브랜치 `airpods-personal-v111-updater-diagnostics`에 저장. Workflow run `38663174580`, job `116188954901` **SUCCESS**, `BUILD SUCCESSFUL in 3m 59s`, 소스/패키지/ZIP/서명 PASS. 릴리스 `my-airpods5-v114-lab-r31`.
+- APK `https://github.com/yooogillycloud123/my-airpods5/releases/download/my-airpods5-v114-lab-r31/My_AirPods5_v1.0.14_CASE_BLE_FULL_SCAN_DIAGNOSTICS_LAB.apk`; `com.myairpods5.personal.lab` vCode 10014; 51,359,502 bytes, APK SHA256 `2400760bbea523fabf6add6d7eb09523266b22c3927e3bac0713ffdd72e550b4`; signer SHA256 `41979a9b3d6b8b916415ac508f2e6826c0483274da5702a0dae579481b145f74`.
+- **실물 소리 재생 PASS 아님**. 골든 `v1.0.10` SHA `b46c8e38f28332f7af0f98bce7b8b27234f62a83d103363cf0697a2fd127445b`는 변경/삭제 금지. 기존 .lab v1.0.13과 서명이 달라 설치 충돌 시에만 LAB 삭제 후 새 LAB 설치; 이때 LAB 저장 `ENC_KEY`가 삭제되므로 신규 LAB에서 이어버드 AACP 1회 연결하여 암호화키 재확보 필요. 이후 케이스 닫고 음악용 BT 연결 해제 후 스캔하는 것이 핵심 목표 검증.
+- 사용자에게 요청할 **단 한 번의 보고**: 「전체 BLE/Apple/07/케이스형/내 암호화키 일치」 35초 검사 결과창 복사. 증거별 후속 단계는 BT 스캔/케이스 광고 포맷/암호화 키/Find My 소리 인증 경로로 차례 좁힐 것.
+- `v1.0.14`은 개인정보와 연결 민감 자료를 외부 업로드하지 않는다. 공개 GitHub에 원시 AACP 키, 광고 MAC, 계정정보 절대 커밋 금지.
+
+---
+
 ## 2026-10-15 케이스 찾기 실기 실패 기록
 - v1.0.13 실험실에서 사용자 보고: 케이스 신호 0건, 실제 케이스 소리 미발생.
 - 현재 Android 앱의 케이스 찾기 소리 기능은 **미구현/미검증**. Apple 나의 찾기의 실물 스피커 지원과 우리 Android 앱에서 제어 가능한지는 별개의 문제.
