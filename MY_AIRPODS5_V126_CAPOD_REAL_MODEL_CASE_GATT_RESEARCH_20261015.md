@@ -30,3 +30,7 @@
 A credible trace or source implementation must show **A3530 case separate BLE identity** (not 0x3020 earbud RPA), **owner enrollment credentials/authentication handshake for Galaxy-only owner**, **Find My case-specific UUID/characteristic**, **start+stop command with valid response**, and **user/heard/recorded real case beep**. Distinguish BLE link encrypted ≠ owner authenticated ≠ speaker audible. Never blindly send other-device commands or manufacture auth success. Use preexisting CI `ci/case_protocol_v119/extract_att_hci.py`, `ci/case_protocol_v123/case_session_evidence.py` for sourced offline traces when present.
 
 **WORK STATUS: model/battery code changed on LAB branch, synthetic/build tests separate from real user physical confirmation. A3530 owner-auth and sound commands remain UNSOLVED; no truthful successful ringtone APK.**
+
+## CI result transparency (preliminary)
+- Initial branch action 38733312258 compiled signed LAB but exposed a duplicate 0x3020 mapping from the frozen source; its APK r3 is superseded and must NOT be recommended.
+- Fix commit 10b3132105dc63edaa25b7259a94957771760c5b corrects original 0x3020 label **in-place**, no duplicate. Replacement action 38734032043 is the authoritative candidate; ensure its completed success and signature/hash before offering any APK.
