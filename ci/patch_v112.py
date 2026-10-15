@@ -38,6 +38,6 @@ for directory in ("values", "values-ko"):
     f=root/"android/app/src/main/res"/directory/"strings.xml"
     if f.exists():
         text=f.read_text("utf-8")
-        text,n=re.subn(r'(<string name="app_name">)[^<]*(</string>)',r'\\1내 에어팟 5 실험실\\2',text,count=1)
+        text,n=re.subn(r'(<string name="app_name">)[^<]*(</string>)',r'\1내 에어팟 5 실험실\2',text,count=1)
         if n: f.write_text(text,"utf-8")
 print("V112_RESEARCH_GATT_AND_DISTINCT_LAB_PACKAGE=PASS")
