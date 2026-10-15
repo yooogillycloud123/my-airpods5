@@ -1,5 +1,17 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 09:28+KST user's v1.0.12 case GATT error 147, corrected v1.0.13 radio targeting
+
+- User runtime: `BLE 연결 종료 상태코드: 147` twice on case-beep v1.0.12 LAB; **Android official BluetoothGatt.GATT_CONNECTION_TIMEOUT = 147/0x93** (not permission denied). Phone's ordinary ANC/AACP/Bluetooth still works; this is a *separate case GATT link*, no evidence of bad Bluetooth stack.
+- Exact root defect in v112 `ci/CaseSpeakerLab_v112.kt`: used `settings.mac_address` from paired **earbuds (Classic address)** and `device.connectGatt(...,TRANSPORT_LE)`; source-backed 2026 research `stuffz/airpods/docs/ble.md` / `ble-research.md` confirms charging **case emits distinct rotating LE advertisements** `Apple manufacturer 0x004c, 07 11 06 plus 16 AES block` and does not resolve with buds IRK. Wrong target could cause GATT 147. This explains test *without proving all other causes ruled out*.
+- v1.0.13 `ci/CaseBeaconFinder_v113.kt` scans 35s for case 07 11 06 ads and decrypts with `ENC_KEY` extracted by its own AACP connection. Requires fixed bytes 8,10,11 zero, proper length and battery bounds, >=2 same-address receptions; does not display/log target address or connect to arbitrary nearby BLE devices. No key or case adverts -> explicit evidence report, no GATT connection. Only detected connectable OWN case advert permits GATT service probe; no sound command unless characteristic + SECOND user permission. The old 147 label corrected to exact timeout meaning in `ci/patch_v113.py`.
+- **Not verified**: scanned case presence, actual FD44 owner endpoint/authorization, real speaker beep. A case can broadcast without allowing GATT or may require Apple-proprietary owner authentication. Do not claim Find My solved based on APK compile.
+- v1.0.13 separate LAB package `com.myairpods5.personal.lab`, branch `airpods-personal-v111-updater-diagnostics`, Actions run `38660885487` SUCCESS, release `my-airpods5-v113-lab-r30`; APK `My_AirPods5_v1.0.13_CASE_BLE_ADDRESS_SCAN_LAB.apk`, 51,359,482 bytes, SHA256 `aee4fc3cb276c00dba28b7d22f71def3005e8660f21a859b0a8f372d55d6bdf1`, signer SHA256 `e40f873f1e565f100a55c51760d5d54ca84f9d09957d58ed1cbbeb0f99638257`. GOLDEN v1.0.10 r21 remains unchanged.
+- If v1.0.12 lab already installed, distinct GitHub Actions debug signer means v1.0.13 cannot install over v1.0.12 lab. **Only lab package** may require user-approved removal; no removal of the fully working GOLDEN v1.0.10 or original LibrePods, no BT unpair or phone resets. For no key: establish AirPods controls in LAB first; a standalone .lab app cannot read private encrypted prefs of GOLDEN.
+- Next test: LAB Settings > 케이스 소리 시험 · 연구 -> 35s search, keep case nearby (opened/closed) and return result dialog text (not raw MAC). For real beep need independently verified AirPods5 speaker endpoint + owner auth; random opcodes forbidden.
+
+---
+
 ## 2026-10-15 v1.0.12 실제 APK 및 다음 기준
 - GOLDEN v1.0.10 r21 정상 앱 보존, 삭제·수정 금지.
 - v1.0.12 LAB는 별도 패키지 `com.myairpods5.personal.lab`, 기존 앱과 나란히 설치 가능.
