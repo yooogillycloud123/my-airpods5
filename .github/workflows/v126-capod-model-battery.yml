@@ -48,7 +48,9 @@ jobs:
           python3 ci/case_protocol_v126/patch_capod_model_battery.py input/app_source
           # Known BLEManager.kt is the ONLY intentional frozen-engine exception.
           # The exact source-bundle SHA and every other source remain protected.
-          grep -v '/bluetooth/BLEManager.kt
+          grep -v '/bluetooth/BLEManager.kt$' input/PRISTINE_ENGINE_SHA256.txt > input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt
+          mv input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt input/PRISTINE_ENGINE_SHA256.txt
+          python3 ci/case_protocol_v126/test_model_battery_contract.py "$SRC/bluetooth/BLEManager.kt"
           python3 ci/case_protocol_v125/test_battery_presentation_gate.py "$SRC"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
@@ -96,53 +98,3 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "my-airpods5-v126-capod-model-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v1.0.26 CAPod model battery LAB' --notes 'Source-supported AirPods5 wireless code 0x3020 + standard 0x3620, guarded Continuity 07 19 01, encrypted ff/percent above 100 absent not 127%, preserves v125 truthful no-data battery and inactive scan menu. Existing BLEManager modified on independent LAB branch, all other core preserved. No extra BLE scans, no Find My case speaker GATT or audio. A3530 owner-auth and true play/stop remain unknown. Debug signer changes per CI, not compatible with already-installed LAB; DO NOT uninstall golden or erase LAB data just to test.' --prerelease
- input/PRISTINE_ENGINE_SHA256.txt > input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt
-          mv input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt input/PRISTINE_ENGINE_SHA256.txt
-          python3 ci/case_protocol_v126/test_model_battery_contract.py "$SRC/bluetooth/BLEManager.kt"
-          python3 ci/case_protocol_v125/test_battery_presentation_gate.py "$SRC"
-          python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
-          python3 ci/case_protocol_v123/test_case_session_evidence.py
-          python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
-          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10025' input/app_source/android/app/build.gradle.kts
-          grep -F 'ACCESS_COARSE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
-          grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
-          grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
-          ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
-          grep -F 'CaseSoundStatusV125.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
-          grep -F 'hasNonzeroMeasuredBattery' "$SRC/presentation/components/BatteryView.kt"
-          grep -F '배터리 정보 확인 안 됨 (0%로 단정하지 않음)' "$SRC/presentation/components/BatteryView.kt"
-          ! grep -F 'CaseResearchMenuV124.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
-          echo 'V125_RETIRED_REFUTED_SCAN=PASS'
-          echo 'V125_ONLY_KOTLIN_PRESENTATION_CODE_MODIFIED=PASS'
-          echo 'A3530_OWNER_GATT_SOUND=NOT_IMPLEMENTED_NOT_VERIFIED'
-      - name: Install SDK and compile lab
-        run: |
-          set -euo pipefail
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
-          echo "sdk.dir=$ANDROID_HOME" > input/app_source/android/local.properties
-          cd input/app_source/android
-          chmod +x gradlew
-          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --console=plain --max-workers=2
-      - name: Verify signed APK and stage release
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-          APK=dist/My_AirPods5_v1.0.25_BATTERY_PROVENANCE_LAB.apk
-          cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
-          unzip -t "$APK" | tail -1
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
-          grep -F "name='com.myairpods5.personal.lab'" dist/PACKAGE.txt
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
-          sha256sum "$APK" | tee dist/SHA256.txt
-          cp input/app_source/LICENSE dist/LICENSE.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: MyAirPods5_v125_battery_provenance_lab
-          path: dist/*
-      - name: Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "my-airpods5-v125-battery-gate-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v1.0.25 battery value reliability LAB' --notes 'All-zero unknown battery now shown as unverified, not fake 0 percent. Retires refuted Pro3 case advert scan menu. No extra BLE scans, GATT writes, or case Find My beep. A3530 owner GATT authentication and play code remain unsolved. v1.0.10 frozen. v124-to-v125 debug signer differs, direct update install may fail and removing LAB erases LAB data. Do not remove baseline.' --prerelease
