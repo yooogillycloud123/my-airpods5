@@ -1,5 +1,12 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v118 CAPod 실제 소스 신규 교차검증
+- CAPod Kotlin `DefaultAapDeviceProfile.kt`: **케이스 효과음은 ATT를 통해 제어**되며 AACP IN_CASE_TONE (0x31) 효과 미확인이라고 직접 표기. `CASE_INFO_REQUEST=0x22` / `CASE_INFO=0x23` 실제 구현은 AirPods Pro3 단독 allowlist (AirPods5 미검증); 케이스 Find My 소리 opcode가 아님.
+- LibrePods #20/#102의 CASE GATT owner 인증 문제와 일치. 따라서 v117 RPA/IRK 코드만으로 사용자의 AirPods5 케이스를 인증하거나 소리 재생할 수 없음.
+- 상세 신규 파일 `MY_AIRPODS5_V118_CASE_ATT_PRIMARY_SOURCE_AUDIT_20261015.md`. 다음 **소스 연구는 케이스 자체 ATT/GATT owner 인증 및 Find My 오디오 명령의 기종별 실증 추적**에 집중. 근거 확보 전 테스트용 새 APK 설치·BLE 스캔·사용자 실기 요구 금지. Golden v1.0.10 불변.
+
+---
+
 ## 2026-10-15 v1.0.17 Android 실제 소스 빌드 PASS (실기 요구 없음)
 - 동작 입증된 LibrePods의 BLE 주소확인(AES-128 IRK RPA)을 Kotlin 순수 모듈로 이식. KeySource EARBUD_AACP vs CASE_OWNER_HANDSHAKE_VERIFIED 구분, 어떤 주소 일치도 Find My 소리 제어 성공이나 케이스 소유자 인증으로 판정하지 않음.
 - GitHub 소스 브랜치 `airpods-personal-v111-updater-diagnostics`, `ci/case_protocol_v117/CaseRpaIdentity.kt`, 테스트 `CaseRpaIdentityTest.kt`.
