@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['ci/check_case_speaker_evidence.py']
+    paths: ['ci/check_case_speaker_evidence.py', '.github/workflows/case-speaker-proof-gate.yml']
 jobs:
   validate:
     runs-on: ubuntu-latest
