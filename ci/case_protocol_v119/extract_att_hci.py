@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections import Counter
 from pathlib import Path
 import struct
@@ -62,6 +63,7 @@ class AttExtractor:
         self.pending: dict[tuple[int, str], tuple[int, int, bytes]] = {}
         self.counter = Counter()
         self.events: list[dict] = []
+        self.uuid_by_handle: dict[tuple[int,int],str] = {}
 
     def add_event(self, frame: int, handle: int, direction: str,
                   event: str, **fields: object) -> None:
@@ -134,6 +136,15 @@ class AttExtractor:
         else:
             self.l2cap(frame, handle, direction, cid, data[:total])
 
+    @staticmethod
+    def parse_uuid(raw: bytes) -> str:
+        if len(raw) == 2:
+            return "0x%04X" % int.from_bytes(raw, "little")
+        if len(raw) == 16:
+            h = raw[::-1].hex()
+            return "-".join((h[:8], h[8:12], h[12:16], h[16:20], h[20:]))
+        return "unknown_uuid"
+
     def l2cap(self, frame: int, handle: int, direction: str,
               cid: int, data: bytes) -> None:
         if cid != 4 or not data:
@@ -147,6 +158,8 @@ class AttExtractor:
                 return
             attribute = int.from_bytes(data[1:3], "little")
             fields["attribute_handle"] = "0x%04X" % attribute
+            if (handle, attribute) in self.uuid_by_handle:
+                fields["observed_uuid"] = self.uuid_by_handle[(handle,attribute)]
             value = data[5:] if opcode in (0x16, 0x17) else data[3:]
             fields["value_length"] = len(value)
             if self.include_private_values:
@@ -166,12 +179,31 @@ class AttExtractor:
             # Do not assume the returned handles belong to an AirPods case.
             fields["format"] = data[1]
             fields["records_length"] = len(data) - 2
+            row = {1: 4, 2: 18}.get(data[1], 0)
+            if row and (len(data)-2) % row == 0:
+                for i in range(2, len(data), row):
+                    att = int.from_bytes(data[i:i+2],"little")
+                    self.uuid_by_handle[(handle,att)] = self.parse_uuid(data[i+2:i+row])
         elif opcode == 0x09 and len(data) >= 2:
             fields["attribute_row_size"] = data[1]
             fields["records_length"] = len(data) - 2
+            row = data[1]
+            if row in (7,21) and (len(data)-2) % row == 0:
+                for i in range(2,len(data),row):
+                    att=int.from_bytes(data[i+3:i+5],"little")
+                    self.uuid_by_handle[(handle,att)] = self.parse_uuid(data[i+5:i+row])
         elif opcode == 0x11 and len(data) >= 2:
             fields["service_row_size"] = data[1]
             fields["records_length"] = len(data) - 2
+            row = data[1]
+            if row in (6,20) and (len(data)-2) % row == 0:
+                fields["observed_services"]=[]
+                for i in range(2,len(data),row):
+                    fields["observed_services"].append({
+                        "start":"0x%04X" % int.from_bytes(data[i:i+2],"little"),
+                        "end":"0x%04X" % int.from_bytes(data[i+2:i+4],"little"),
+                        "uuid":self.parse_uuid(data[i+4:i+row])
+                    })
         self.add_event(frame, handle, direction, name, **fields)
 
     def result(self) -> dict:
@@ -182,6 +214,10 @@ class AttExtractor:
             "case_sound_effect": "NOT_OBSERVED",
             "raw_values_exported": self.include_private_values,
             "counters": dict(self.counter),
+            "discovered_handle_uuid_map_not_verified_case": [
+                {"connection":"hci_%04X" % conn, "handle":"0x%04X" % h, "uuid":uuid}
+                for (conn,h),uuid in sorted(self.uuid_by_handle.items())
+            ],
             "events": self.events,
         }
 
@@ -213,12 +249,9 @@ def main() -> None:
         if args.output.exists():
             raise SystemExit("Refusing to overwrite existing output file")
         # Local output, no network calls; private data restricted to file owner.
-        fd = args.output.open("x", encoding="utf-8")
-        try:
-            fd.write(rendered + "\n")
-        finally:
-            fd.close()
-        args.output.chmod(0o600)
+        fd = os.open(args.output,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+        with os.fdopen(fd,"w",encoding="utf-8") as stream:
+            stream.write(rendered + "\n")
         print("Stored LOCAL diagnostic output; this does not establish case ownership or sound playback.")
 
 
