@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <application android:allowBackup="false" android:label="@string/app_name" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity>
+        <activity android:name=".Slot1Activity" android:exported="true" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name=".Slot2Activity" android:exported="true" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name=".Slot3Activity" android:exported="true" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name=".RoutineOnActivity" android:exported="true" android:excludeFromRecents="true" android:noHistory="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name=".RoutineOffActivity" android:exported="true" android:excludeFromRecents="true" android:noHistory="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <receiver android:name=".SlotCommandReceiver" android:exported="false" />
+        <receiver android:name=".FlowBootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <service android:name=".WatchService" android:exported="false" android:foregroundServiceType="connectedDevice" />
+        <service android:name=".EdgeFlowService" android:exported="false" android:foregroundServiceType="connectedDevice" />
+        <service android:name=".ChatGPTKeyService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="false">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
+        </service>
+        <service android:name=".GlobalReturnKeyService" android:label="@string/global_return_service_name" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="false">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/global_return_service_config" />
+        </service>
+    </application>
+</manifest>
