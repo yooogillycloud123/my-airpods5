@@ -1,0 +1,21 @@
+plugins {
+    id 'com.android.application'
+}
+android {
+    dependenciesInfo { includeInApk = false; includeInBundle = false }
+    namespace 'com.mxreturn.helper'
+    compileSdk 35
+    defaultConfig {
+        applicationId "com.mxreturn.helper"
+        minSdk 24
+        targetSdk 24
+        versionCode 12
+        versionName "0.4.0-flow"
+    }
+    buildTypes { release { minifyEnabled false } }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies { implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:6.1' }
