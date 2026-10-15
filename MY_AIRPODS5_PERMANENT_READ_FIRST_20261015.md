@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 13:03+ 명확한 기술자료 재검토 완료 — 근거 없는 실기 반복 중단
+- 사용자 회사 근무 중이며, 기존 BLE/RSSI/인식 시험에 이미 많은 시간 소비함. **추가 35초 신호 검색, 거리 실험, APK 재설치, 디버깅 설정 변경 요청 금지**. 과거 수치는 버리지 않고 근거로 사용.
+- Librepods README는 케이스 Find My 소리를 계획/추가 RE 필요라고 표기; AAP Definitions 및 PR764에서 확인한 케이스 소리 명령은 충전 알림 효과음 on/off이지 분실 케이스 삐삐가 아님. Issue718 'AACP play tone' 제안은 closed as not planned이고 실증 소스 없음.
+- AirGuard AppleFindMy.kt는 비소유자 분리 상태 액세서리 GATT 사운드 경로만 지원. OpenTagViewer owner-connected-tags 연구에서는 제3자 Find My 액세서리 owner-sound에서 전용 링크 암호화 필요, 평문 GATT ACK만으로는 재생되지 않음. 둘을 사용자의 AirPods5 실증 성공으로 착각하면 안 됨.
+- v116 실물 재검증 RSSI 12:02 길이4 근/원거리 4/-95dBm vs 46/-94dBm, case identity FALSE/UNKNOWN. BLE 광고만으로 이름/MAC/소유자 확인 불가. Golden v1.0.10 변경 금지.
+- 종합 기술 감사 새 문서: `MY_AIRPODS5_CASE_SOUND_SOURCE_AUDIT_NO_MORE_BLIND_TESTS_20261015.md`. 이 문서에 검증된 원본 링크/해시, 성공과 미구현의 구분, 다음 프로토콜 구현 Go/No-Go 기록. `ci/check_case_speaker_evidence.py` 소스 증거 게이트 + GitHub Action `case-speaker-proof-gate.yml` 소스 테스트. **케이스 실제 스피커 사운드 아직 작동하지 않음**.
+- 다음 개발은 본인 AirPods5의 실제 케이스 제어 채널+인증+사운드 실제 재생 패킷의 source-verified 증거를 먼저 확보한 뒤 LAB 이식. 사용자에게 추측성 실기 검증 떠넘기지 말 것. 단순 docs/GitHub CI PASS ≠ 케이스 소리 PASS.
+
+---
+
 ## 2026-10-15 v1.0.16 실측 재검증 — Find My 케이스 신원 연결 실패
 - 가까이 12:02 길이4=4건 RSSI -95dBm, 멀리 46건 RSSI -94dBm. 기존 '케이스 멀어지니 감소' 결과 재현 실패. 내 케이스라고 결론 내릴 근거 없음.
 - Apple 02:15 길이23 720/795건은 iBeacon 표준 광고 형태이며 Apple 제품이나 케이스 Find My 기능의 증거 아님. 12:19 길이27 1/3건, FD44 광고 0, AirGuard 일치 0.
