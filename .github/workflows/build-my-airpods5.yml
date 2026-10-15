@@ -19,6 +19,7 @@ on:
       - "ci/patch_v112.py"
       - "ci/CaseBeaconFinder_v113.kt"
       - "ci/patch_v113.py"
+      - "ci/patch_v114_unfiltered_case_ble.py"
       - "ci/Capture-MyAirPods5-SystemCrash.ps1"
 permissions:
   contents: write
@@ -59,10 +60,15 @@ jobs:
           python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
           python3 ci/patch_v112.py input/app_source "$PWD"
           python3 ci/patch_v113.py input/app_source "$PWD"
+          python3 ci/patch_v114_unfiltered_case_ble.py input/app_source
           python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py
           test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10013' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10014' input/app_source/android/app/build.gradle.kts
+          grep -F 'ACCESS_FINE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
+          ! grep -F 'android:usesPermissionFlags="neverForLocation"' input/app_source/android/app/src/main/AndroidManifest.xml
+          grep -F 'scanner?.startScan(null,' input/app_source/android/app/src/main/java/me/kavishdevar/librepods/CaseBeaconFinder.kt
+          echo 'V114_UNFILTERED_BLE_COUNTS_MANIFEST_GATE=PASS'
           grep -F 'applicationId = "com.myairpods5.personal.lab"' input/app_source/android/app/build.gradle.kts
           ! grep -F 'android.resource://me.kavishdevar.librepods' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
           grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
@@ -116,7 +122,7 @@ jobs:
           mkdir -p dist
           SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
           test -s "$SOURCE"
-          APK=dist/My_AirPods5_v1.0.13_CASE_BLE_ADDRESS_SCAN_LAB.apk
+          APK=dist/My_AirPods5_v1.0.14_CASE_BLE_FULL_SCAN_DIAGNOSTICS_LAB.apk
           cp "$SOURCE" "$APK"
           unzip -t "$APK" | tail -1
           # Verify the DEX, not merely source text, actually contains the crash recorder.
@@ -128,7 +134,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/GPL_LICENSE.txt
-          echo "v1.0.13: user observed status 147 = Android GATT_CONNECTION_TIMEOUT. v112 used classic earbud address; v113 performs 35s READ-ONLY case BLE 07 11 06 scan and matching AES proximity-key verification, only connects to verified case advertiser and only probes Find My GATT. Actual case speaker beep NOT PROVEN. Distinct lab package, GOLDEN untouched; key must exist within lab settings." > dist/DEVICE_TEST_REQUIRED.txt
+          echo "v1.0.14 independent case-radio diagnostic: previous restricted scan gave 0. This build requests Android precise location permission with disclosure; removes neverForLocation filtering and all ScanFilter controller filters; reports BLE vs Apple vs 07 vs case-shaped vs decrypted owner case counters, no raw addresses or uploads. CASE SOUND NOT WORKING YET. User v1.0.10 GOLDEN app untouched. Lab-only reinstall may be required because GitHub debug signing changes." > dist/DEVICE_TEST_REQUIRED.txt
           cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
           cp input/SIGNING_STATE.txt dist/SIGNING_STATE.txt
@@ -137,6 +143,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="my-airpods5-v113-lab-r${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" dist/* --title "My AirPods 5 v1.0.13 genuine case BLE identity scan" --notes "147 = Android GATT_CONNECTION_TIMEOUT, not authorization rejected. v112 mistakenly used classic earbud address. v113 uses 35s Apple case format 07 11 06 BLE scan and case AES key obtained by original AACP, validates case decrypted layout before selecting actual rotating BLE address; never connects or writes to unverified cases. If no encryption key or matching case, reports and stops. Find My sound on case STILL UNPROVEN; verified endpoint required and explicit second user permission. Stable v1.0.10 GOLDEN untouched, package .lab." --prerelease
+          TAG="my-airpods5-v114-lab-r${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/* --title "My AirPods5 v1.0.14 truthful unfiltered BLE evidence" --notes "Separate lab package and 1.0.10 GOLDEN untouched. v113 case-shaped advertised 0 even though actual BLE scanner manufacturer-filtered. v114 explicitly removes neverForLocation, requests Android fine-location permission only for local beacon detection, uses unfiltered BLE scan, reports counts of ALL BLE/Apple/07/case-shaped/decrypted own-case. No raw MACs, no uploads, no unknown-case connections; experimental case speaker still unproven. Physical report needed." --prerelease
           echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
