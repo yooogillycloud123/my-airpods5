@@ -1,5 +1,14 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.12 실제 APK 및 다음 기준
+- GOLDEN v1.0.10 r21 정상 앱 보존, 삭제·수정 금지.
+- v1.0.12 LAB는 별도 패키지 `com.myairpods5.personal.lab`, 기존 앱과 나란히 설치 가능.
+- Settings `케이스 소리 시험 · 연구`: 사용자가 페어링한 AirPods만 GATT 기능 확인, 인증된 사용자용 특성이 있을 때 별도 동의 후 짧은 소리 재생 시험. 소리 실제 발생 여부는 아직 검증하지 못함.
+- ACTIONS `38657605679` 컴파일 PASS, release `my-airpods5-v112-lab-r27`, APK `My_AirPods5_v1.0.12_CASE_SOUND_RESEARCH_LAB.apk`, SHA256 `920e0fd3479c1b2a72ee144d90fbce7153fb0693016291c0edc89046585942f9`.
+- 자세한 실험 프로토콜·사용법은 LAB 브랜치 `V112_CASE_RESEARCH.md` 확인. 기존 청취 모드와 원본 소스 보존. 다음 진행은 실기에서 나온 정확한 결과 기준으로 수정.
+
+---
+
 ## 2026-10-15 v1.0.11 개발 후보 실제 APK 빌드 성공 — GOLDEN 승격 금지
 
 - user-verified GOLDEN r21 v1.0.10 remains unchanged. User confirmed 4/4 listening modes real PASS.
