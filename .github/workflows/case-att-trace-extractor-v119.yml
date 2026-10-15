@@ -22,6 +22,7 @@ jobs:
           python3 ci/case_protocol_v119/test_extract_att_hci.py
           python3 ci/case_protocol_v119/test_uuid_map.py
           python3 -m py_compile ci/case_protocol_v119/extract_att_hci.py
+          python3 -m py_compile ci/case_protocol_v119/compare_case_sound_sessions.py
           ! grep -E 'connectGatt|BluetoothLeScanner|startScan\\(' ci/case_protocol_v119/extract_att_hci.py
           echo 'OFFLINE_SOURCE_TESTS_PASS_AND_NO_LIVE_RADIO=YES'
           echo 'CASE_AUDIO_HARDWARE_SUCCESS=NOT_VERIFIED'
