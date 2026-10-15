@@ -1,5 +1,7 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+**v123 확장/최신 CI:** 원본 `stuffz/airpods` **AirPods Pro 3** 케이스만 확인된 별도 `07 11 06` 광고+`ENC_KEY` AES 복호화 구현을 OFFLINE 파일 `ci/case_protocol_v123/case_broadcast_evidence.py`로 분리. 이어버드 `IRK`는 해당 케이스 주소를 판별하지 못함(해당 원본 캡처 한정). AirPods **5** 동일 방식 여부 미검증, 소유자 인증/실제 찾기 사운드와 무관. GitHub Actions **38718067357 SUCCESS**, 20 synthetic unit tests PASS; 실제 기기/케이스 소리 PASS 없음. 상세 `MY_AIRPODS5_V123_CASE_SESSION_SOURCE_PROOF_CHECKPOINT_20261015.md` 참조. 새 APK 없음.
+
 ## 2026-10-15 v123 source-only checkpoint — not an APK or case speaker success
 - New **independent research branch** `airpods-case-session-proof-v123-20261015`, latest LAB v122 source frozen. `ci/case_protocol_v123/case_session_evidence.py` implements an offline btsnoop HCI handle reuse/encryption/session-epoch evidence guard. Raw bytes/addresses redacted. Actual case GATT owner authentication and beep **STILL NOT IMPLEMENTED**.
 - CI Actions `38717404840` **SUCCESS**, synthetic no-device checks only, workflow job `116363341045`. **No new APK issued or installed**. Source step not marked physical pass.
