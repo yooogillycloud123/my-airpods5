@@ -69,8 +69,11 @@ once(g,'versionCode = 10025','versionCode = 10026',"VERSIONCODE")
 once(g,'versionName = "1.0.25-battery-provenance-case-gate"',
       'versionName = "1.0.26-capod-model-battery-gate"',"VERSIONNAME")
 src=p.read_text("utf8")
-assert src.count("0x3020 to ")==1
-assert src.count("0x3620 to ")==1
+for line in src.splitlines():
+    if "0x3020 to " in line or "0x3620 to " in line:
+        print("V126_MAP_ENTRY",line.strip())
+assert '0x3020 to "AirPods 5 (무선 충전 케이스)"' in src
+assert '0x3620 to "AirPods 5"' in src
 assert "rawCaseBattery == null" in src
 assert 'applicationId = "com.myairpods5.personal.lab"' in g.read_text("utf8")
 assert 'connectGatt(' not in src
