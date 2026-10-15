@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="mx_return_slot_1" android:enabled="true" android:icon="@android:drawable/ic_media_next" android:shortcutShortLabel="@string/shortcut_slot_1" android:shortcutLongLabel="@string/shortcut_slot_1_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.mxreturn.helper" android:targetClass="com.mxreturn.helper.Slot1Activity" />
+    </shortcut>
+    <shortcut android:shortcutId="mx_return_slot_2" android:enabled="true" android:icon="@android:drawable/ic_media_next" android:shortcutShortLabel="@string/shortcut_slot_2" android:shortcutLongLabel="@string/shortcut_slot_2_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.mxreturn.helper" android:targetClass="com.mxreturn.helper.Slot2Activity" />
+    </shortcut>
+    <shortcut android:shortcutId="mx_return_slot_3" android:enabled="true" android:icon="@android:drawable/ic_media_next" android:shortcutShortLabel="@string/shortcut_slot_3" android:shortcutLongLabel="@string/shortcut_slot_3_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.mxreturn.helper" android:targetClass="com.mxreturn.helper.Slot3Activity" />
+    </shortcut>
+    <shortcut android:shortcutId="mx_return_auto_on" android:enabled="true" android:icon="@android:drawable/ic_media_play" android:shortcutShortLabel="@string/shortcut_on" android:shortcutLongLabel="@string/shortcut_on_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.mxreturn.helper" android:targetClass="com.mxreturn.helper.RoutineOnActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="mx_return_auto_off" android:enabled="true" android:icon="@android:drawable/ic_media_pause" android:shortcutShortLabel="@string/shortcut_off" android:shortcutLongLabel="@string/shortcut_off_long">
+        <intent android:action="android.intent.action.VIEW" android:targetPackage="com.mxreturn.helper" android:targetClass="com.mxreturn.helper.RoutineOffActivity" />
+    </shortcut>
+</shortcuts>
