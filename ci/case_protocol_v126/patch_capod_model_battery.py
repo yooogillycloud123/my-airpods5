@@ -16,9 +16,10 @@ def once(f,old,new,label):
     print(f"V126_{label}=PASS")
 # CAPod AirPodsGen5Wireless.Factory reports device model 0x3020;
 # its ordinary AirPodsGen5 model is separately 0x3620.
-once(p, '        0x1F20 to "AirPods Max (USB-C)"',
-      '''        0x1F20 to "AirPods Max (USB-C)",
-        0x3020 to "AirPods 5 (무선 충전 케이스)",
+# The 2026-10-14 frozen app source already has 0x3020, but labels it
+# generically. Narrowly correct it in place (never add a duplicate map key).
+once(p, '        0x3020 to "AirPods 5"',
+      '''        0x3020 to "AirPods 5 (무선 충전 케이스)",
         0x3620 to "AirPods 5"''',"EXACT_MODEL_MAP")
 # CAPod ProximityPairing.Decoder first requires Apple Continuity type 07,
 # length 25 and body prefix 01 to reject identity-address garbage.
@@ -72,8 +73,8 @@ src=p.read_text("utf8")
 for line in src.splitlines():
     if "0x3020 to " in line or "0x3620 to " in line:
         print("V126_MAP_ENTRY",line.strip())
-assert '0x3020 to "AirPods 5 (무선 충전 케이스)"' in src
-assert '0x3620 to "AirPods 5"' in src
+assert src.count('0x3020 to "AirPods 5 (무선 충전 케이스)"') == 1
+assert src.count('0x3620 to "AirPods 5"') == 1
 assert "rawCaseBattery == null" in src
 assert 'applicationId = "com.myairpods5.personal.lab"' in g.read_text("utf8")
 assert 'connectGatt(' not in src
