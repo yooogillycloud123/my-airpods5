@@ -1,5 +1,17 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v123 source-only checkpoint — not an APK or case speaker success
+- New **independent research branch** `airpods-case-session-proof-v123-20261015`, latest LAB v122 source frozen. `ci/case_protocol_v123/case_session_evidence.py` implements an offline btsnoop HCI handle reuse/encryption/session-epoch evidence guard. Raw bytes/addresses redacted. Actual case GATT owner authentication and beep **STILL NOT IMPLEMENTED**.
+- CI Actions `38717404840` **SUCCESS**, synthetic no-device checks only, workflow job `116363341045`. **No new APK issued or installed**. Source step not marked physical pass.
+- New public original source `stuffz/airpods/docs/ble-research.md`: independent case BLE address **not resolving against earbud IRK**, but tested on **AirPods Pro 3**, not user's AirPods 5. Prior v120 IRK-only GATT preflight therefore cannot safely be assumed to locate the user's separate closed case; no new blind BLE scan requested.
+- v1.0.10 is a frozen **partially user verified baseline, not a finished app**. v122 LAB battery display/IRK source fix CI success still lacks actual device verification, and per-build signing prevents seamless LAB updates. Both projects' golden artifacts, AA daemon/pairing untouched.
+- Full permanent checkpoint: `MY_AIRPODS5_V123_CASE_SESSION_SOURCE_PROOF_CHECKPOINT_20261015.md` in this repo's `main`. Source code resides **only** in the new v123 branch.
+- Next actual blocker: **AirPods5 case owner pairing/auth + case speaker sound instruction/ack/proven audible output**. Do not confuse HCI encrypted link, BLE RPA or GATT write ACK with Find My case sound. No unsolicited test APK.
+
+---
+
+
+
 ## 사용자 최종 정정 2026-10-15 18:50 KST — v1.0.10을 정식 완성본이라고 하지 말 것
 - 사용자가 **현재 정식 완성본 AirPods 앱은 없다고 명확히 정정함**. v1.0.10은 앱 실행/초기 배터리 UI/일부 청취 모드 실물 동작을 확인한 임시 안전 기준선일 뿐, 전 기능 검증 완료·정식 통합 완성판이 아님. '정상 완성본', '기능 완성', '제품 출시'라고 쓰면 사용자 요구와 모순됨.
 - 이후 LAB v1.0.20~22는 실제 찾기 소리 재생을 전혀 구현하지 못했고, LAB v1.0.21 IRK 미수신(음악용 연결 전후), LAB 배터리 0% 표시 오류가 관찰됨. v1.0.22 코드 수정 CI PASS는 실제 배터리 수신·IRK·소리 복구 실물 PASS와 다름.
