@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 18시 v1.0.20 '검색 권한 부족' 실제 원인과 v1.0.21 수정본 빌드 PASS
+- 사용자 실제 LOG: SM-S948N Android 17 sdk37, LAB v1.0.20 시작/ServiceConnection.init COMPLETE, `NO_JAVA_FATAL_CAPTURED`, 메뉴가 `검색 권한 부족`에 차단. **GATT 시도/케이스 사운드 단계 도달 전, 앱의 런타임 권한 가드에서 종료**. 원래 source `CaseOwnerProbeV120.open`은 BLUETOOTH_SCAN, BLUETOOTH_CONNECT, FINE LOCATION만 검사하고 앱 내 권한 요청 API가 전혀 없음.
+- Android 공식: Android12+ FINE 런타임 권한은 COARSE와 함께 요청해야 함. 새 `ci/case_protocol_v121/patch_lab_permission.py`는 LAB IRK 체크를 먼저 하고, 권한 부족 유형 표시, Nearby 기기 및 COARSE+FINE 정확 위치 승인 버튼, 앱 정보 화면 바로가기, 권한 승인 시 검색 재확인 대화상자(자동 스캔 없음) 구현. 소리/GATT 쓰기 미구현, 개인정보/좌표 수집 없음.
+- **기존 v1.0.20 설치본으로 즉시 해결**: 설정→애플리케이션→`내 에어팟 5 실험실`→권한→주변 기기 허용·위치 `앱 사용 중 허용`+`정확한 위치` ON. 실험실 앱으로 돌아가 동일 메뉴 누르면 permission gate 통과 가능. 이후 IRK 미수신 표출 시 LAB 앱에서 에어팟 한번 정상 연결하면 됨. GOLDEN 삭제 금지.
+- **새 설치형 LAB v1.0.21**: release `my-airpods5-v121-lab-r1`, APK `My_AirPods5_v1.0.21_BLE_PERMISSION_RECOVERY_LAB.apk`, SHA256 `da355e062cf14ecb044e3fc8d7809b7076f7964b06ad56953bc4f493a4fed874`, signer SHA256 `c3355af70901af41a6ceb3ec2fdc7641fc24e18234f27af31aec38dc7fa409a9`, size 51,408,729, App ID `com.myairpods5.personal.lab`, versionCode 10021. Actions `38710016440` actual SUCCESS, `BUILD SUCCESSFUL in 3m 26s`, ZIP/package/signature/static/engine sha gate PASS.
+- v1.0.20→v1.0.21 LAB signing differs. **새 APK 설치 강요하지 않음**; current v120 manual permission grant is quickest and avoids LAB uninstall/IRK loss. GOLDEN v1.0.10 and AA Golden untouched.
+- Source details `MY_AIRPODS5_V121_PERMISSION_GATE_STATUS_20261015.md`, workflow `.github/workflows/v121-ble-permissions.yml`. 케이스 실제 beep 여전히 미구현/미검증. 다음 실측은 permission then IRK/gatt gate only, not repeat 35s BLE or reset pairing.
+
+---
+
 ## 2026-10-15 오후 v1.0.20 설치가능 LAB APK 실제 릴리스 / 사용자 실험 대기
 - 이번 사용자 '말이 아니라 결과물' 명시 요청으로 별도 설치 실험용 실제 APK 제작/서명/배포. 정상 v1.0.10 GOLDEN과 AA Golden은 변경·삭제하지 않음.
 - `my-airpods5-v120-lab-r2/My_AirPods5_v1.0.20_OWNER_CASE_GATT_PREFLIGHT_LAB.apk` SHA256 `3f6702b23179561648f30f4c189573f163992cc60af89ce4ff635059ff60d134`, 패키지 `com.myairpods5.personal.lab`, 크기 51392317 bytes.
