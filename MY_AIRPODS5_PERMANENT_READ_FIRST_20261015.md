@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 오후 v1.0.20 설치가능 LAB APK 실제 릴리스 / 사용자 실험 대기
+- 이번 사용자 '말이 아니라 결과물' 명시 요청으로 별도 설치 실험용 실제 APK 제작/서명/배포. 정상 v1.0.10 GOLDEN과 AA Golden은 변경·삭제하지 않음.
+- `my-airpods5-v120-lab-r2/My_AirPods5_v1.0.20_OWNER_CASE_GATT_PREFLIGHT_LAB.apk` SHA256 `3f6702b23179561648f30f4c189573f163992cc60af89ce4ff635059ff60d134`, 패키지 `com.myairpods5.personal.lab`, 크기 51392317 bytes.
+- GitHub Actions `38707003529` 실제 SUCCESS, Android Kotlin + APK build 3m48s, 사인/zip/core SHA gate 모두 PASS. 
+- LAB 설정 `내 케이스 제어 경로 확인 · 연구`: LibrePods 실소스 BLE RPA/IRK 검증 12초, 내 이어버드 IRK와 일치하며 연결 가능한 후보만 별도 동의하에 GATT UUID를 읽고 FD44/4F860002/4F860003 확인. 원시 MAC/키 공유 안 함. **단순 RPA 일치는 케이스 신원/소유자 인증이 아니며 케이스 소리 명령은 보내지 않음**.
+- 앞선 LAB과 signer 달라 설치 충돌하면 **LAB만** 삭제하고 다시 설치. 그러면 LAB에 IRK 없음 → LAB에서 AirPods 이어버드 1회 정상 연결하여 키 수신 필요. Golden 삭제/페어링 초기화 절대 요구 금지.
+- 새 근거·절차 문서 `MY_AIRPODS5_V120_INSTALLABLE_GATT_GATE_ACTUAL_BUILD_20261015.md`. 실기 결과는 아직 없음. 실제 케이스 스피커 소리는 **NOT IMPLEMENTED**. 다음은 `IRK 없음/0 matches/GATT available` 중 어느 gate인지 물리 결과 1회 확인하고 case owner authentication protocol verification 지속.
+
+---
+
 ## 2026-10-15 v119 오프라인 GATT 실제 추출 + 비교 기능 완료
 - LAB 브랜치 `ci/case_protocol_v119/extract_att_hci.py`에 실제 btsnoop H4/ACL/L2CAP/ATT 기록에서 서비스·특성 UUID, ATT 쓰기/응답/알림, BLE 암호화 변경을 추출하는 파서를 구현.
 - 추가 `ci/case_protocol_v119/compare_case_sound_sessions.py`: 인증된 케이스의 실제 소리 버튼 실행 전/후 HCI 캡처가 있으면 관찰된 GATT 제어 명령 후보의 차이만 계산(특성 UUID 우선, 세션별 핸들 무시). 실제 케이스 캡처 **아직 없음**. 현재 BLE RSSI 로그로 케이스 사운드 opcode를 뽑았다고 주장하면 안 됨.
