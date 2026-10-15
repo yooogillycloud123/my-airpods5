@@ -1,0 +1,20 @@
+MX Return FLOW - 현재실사용본 통합 지점
+
+[ThisWorkbook.Workbook_Open]
+기존 정상 코드는 그대로 두고, 종료 직전이 아니라 초기화가 끝난 뒤 아래 3줄만 추가:
+
+    On Error Resume Next
+    MXFlow_Start
+    On Error GoTo 0
+
+[ThisWorkbook.Workbook_BeforeClose]
+기존 정상 코드 가장 앞 또는 종료 정리 구간에 아래 3줄 추가:
+
+    On Error Resume Next
+    MXFlow_Stop
+    On Error GoTo 0
+
+주의:
+- 기존 Workbook_Open / BeforeClose 내용 삭제 금지.
+- 기존 단축키/패널/사진/VBA 기능 유지.
+- modMXFlowExcel 하나만 추가하면 됨.
