@@ -1,0 +1,41 @@
+name: V125 UI source proof (offline only)
+on:
+  push:
+    branches: [airpods-personal-v125-model-specific-ux-20261015]
+    paths: [".github/workflows/v125-ui-source-inspect.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Apply frozen v124 LAB patches and print source proof
+      shell: bash
+      run: |
+        set -euo pipefail
+        FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+        echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+        unzip -q "$FILE" -d input
+        SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+        cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+        python3 ci/repair_korean_onboarding_and_service.py input/app_source
+        cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+        python3 ci/repair_personal_ui_v106.py input/app_source
+        python3 ci/repair_personal_activity_v107.py input/app_source
+        python3 ci/repair_personal_oneear_v108.py input/app_source
+        python3 ci/add_personal_diagnostics_v109.py input/app_source
+        python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+        python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
+        python3 ci/patch_v112.py input/app_source "$PWD"
+        python3 ci/patch_v113.py input/app_source "$PWD"
+        python3 ci/patch_v114_unfiltered_case_ble.py input/app_source
+        python3 ci/patch_v115_findmy_radio_audit.py input/app_source "$PWD"
+        python3 ci/patch_v116_observed_rssi.py input/app_source
+        python3 ci/case_protocol_v117/patch_android_lab_case_identity.py input/app_source "$PWD"
+        python3 ci/case_protocol_v120/patch_lab_preflight.py input/app_source "$PWD"
+        python3 ci/case_protocol_v121/patch_lab_permission.py input/app_source
+        python3 ci/case_protocol_v122/patch_lab_irk_battery.py input/app_source
+        python3 ci/case_protocol_v124/patch_lab_independent_case.py input/app_source "$PWD"
+        python3 ci/case_protocol_v125/inspect_ui_source.py input/app_source
