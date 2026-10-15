@@ -22,7 +22,9 @@ def observed_writes(report: dict) -> Counter:
             continue
         # Prefer observed characteristic UUID; GATT handles are session-local.
         uuid = event.get("observed_uuid", "UNMAPPED")
-        key = (event["type"], uuid, event.get("attribute_handle","?"),
+        # The numeric ATT handle is not a stable cross-session identifier.
+        stable = "UUID:"+uuid if uuid != "UNMAPPED" else "UNMAPPED_HANDLE:"+event.get("attribute_handle","?")
+        key = (event["type"], uuid, stable,
                event.get("value_length",0))
         count[key] += 1
     return count
@@ -37,7 +39,7 @@ def difference(baseline: dict, ring: dict) -> dict:
             result.append({
                 "att_action":kind,
                 "observed_characteristic_uuid":uuid,
-                "attribute_handle_unverified":handle,
+                "comparison_key":handle,
                 "value_length":length,
                 "baseline_count":prev,
                 "sound_action_capture_count":count,
