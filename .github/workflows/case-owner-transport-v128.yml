@@ -1,0 +1,47 @@
+name: AirPods 5 case owner transport v128 -- offline proof and source result
+on:
+  push:
+    branches: [airpods-case-owner-transport-v128-20261015]
+    paths: ['ci/case_protocol_v128/**', '.github/workflows/case-owner-transport-v128.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Run original regression and v128 L2CAP conformance tests
+      run: |
+        set -euo pipefail
+        python3 ci/case_protocol_v119/test_extract_att_hci.py
+        python3 ci/case_protocol_v119/test_uuid_map.py
+        python3 ci/case_protocol_v123/test_case_session_evidence.py
+        python3 ci/case_protocol_v128/test_l2cap_owner_trace.py
+        python3 -m py_compile ci/case_protocol_v128/l2cap_owner_trace.py
+        ! grep -nE 'bluetoothLeScanner|startScan\(|connectGatt\(|writeCharacteristic\(|createBond\(' ci/case_protocol_v128/l2cap_owner_trace.py
+        echo 'V128_TRANSPORT_SOURCE_REGRESSION=PASS'
+        echo 'AIRPODS5_CASE_OWNER_AUTH=UNRESOLVED'
+        echo 'AIRPODS5_CLOSED_CASE_BEEP=NOT_IMPLEMENTED_NOT_VERIFIED'
+    - name: Produce portable source result artifact
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        zip -j dist/AirPods5_A3530_CASE_OWNER_TRANSPORT_v128_SOURCE_RESEARCH.zip           ci/case_protocol_v128/l2cap_owner_trace.py           ci/case_protocol_v128/test_l2cap_owner_trace.py           ci/case_protocol_v128/README.md           ci/case_protocol_v119/extract_att_hci.py
+        sha256sum dist/*.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: AirPods5-v128-case-owner-transport-source
+        path: dist/*.zip
+        if-no-files-found: error
+    - name: Publish distinct research-only release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        TAG="my-airpods5-v128-case-owner-research-r${GITHUB_RUN_NUMBER}"
+        gh release create "$TAG" dist/AirPods5_A3530_CASE_OWNER_TRANSPORT_v128_SOURCE_RESEARCH.zip           --target "$GITHUB_SHA"           --title "AirPods5 A3530 v128 case-owner transport research - NOT AN APK"           --notes "Validated offline HCI L2CAP Classic/LE channel provenance research source. This does not connect to real case, does not authenticate owner, and does not play case Find My sound. No user BLE scan or reinstall required. v1.0.10 baseline and Android Auto app are untouched."
