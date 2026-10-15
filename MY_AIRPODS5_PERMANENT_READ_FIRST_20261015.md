@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.15 Find My 조사 실험판 실물검증 대기
+- Galaxy만 사용한 소유자 조건 유지, v1.0.10 GOLDEN 앱 보존.
+- 새 실험용 APK GitHub release `my-airpods5-v115-lab-r1`, 파일 `My_AirPods5_v1.0.15_FINDMY_BEACON_EVIDENCE_LAB.apk`.
+- GitHub Actions `38669531352` SUCCESS; 크기 51375874 bytes, SHA256 `58a1b8db50d50600db78604c39ff42b287566edeb03753618b04bd10e57df7f9`.
+- Android LAB 별도 패키지 `com.myairpods5.personal.lab`, 기존 앱에 영향 없음.
+- 앱 설정의 Find My 신호 조사 메뉴에서 35초 측정 후 결과 복사. Apple 12형, AirGuard AirPods 조건, FD44, 유형별 총계만 확인.
+- 아직 실제 케이스를 울리는 기능은 미구현. 원격 사운드 제어 성공 주장 금지.
+
+---
+
 ## 2026-10-15 외부 연구 재검토 결과
 - 기존 닫힘/열림 실기 결과 모두 Apple 07형 0건. 배터리 광고 형식만으로 케이스 찾기 소리를 구현한다는 기존 방향 중단.
 - AirGuard 공개 코드는 별도로 Find My Apple 12형 신호를 다룬다. 비소유자 분리된 추적기 소리 기능과 사용자의 소유자 케이스 소리 명령을 구분해야 한다.
