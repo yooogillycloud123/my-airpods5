@@ -1,5 +1,14 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 케이스 찾기 실기 실패 기록
+- v1.0.13 실험실에서 사용자 보고: 케이스 신호 0건, 실제 케이스 소리 미발생.
+- 현재 Android 앱의 케이스 찾기 소리 기능은 **미구현/미검증**. Apple 나의 찾기의 실물 스피커 지원과 우리 Android 앱에서 제어 가능한지는 별개의 문제.
+- 사용자 목표: 이어버드가 양쪽 모두 케이스 안에 있고 Bluetooth 오디오 연결이 없어도 케이스 소리로 찾기. 먼저 이어버드를 빼거나 연결하라는 방안은 목표 미충족.
+- BLE 0건은 앱이 설정한 좁은 검색 조건에 맞는 수신이 없었다는 뜻이지 주변 모든 Apple 신호가 없다는 증거가 아님. RSSI 0 역시 유효 측정값이 아니라 초기값.
+- 기존 정상 v1.0.10 GOLDEN 변경하지 말 것. 다음 배포는 실질적인 근거와 검증 가능한 개선을 갖춘 경우에만 진행할 것.
+
+---
+
 ## 2026-10-15 09:28+KST user's v1.0.12 case GATT error 147, corrected v1.0.13 radio targeting
 
 - User runtime: `BLE 연결 종료 상태코드: 147` twice on case-beep v1.0.12 LAB; **Android official BluetoothGatt.GATT_CONNECTION_TIMEOUT = 147/0x93** (not permission denied). Phone's ordinary ANC/AACP/Bluetooth still works; this is a *separate case GATT link*, no evidence of bad Bluetooth stack.
