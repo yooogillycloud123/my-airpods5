@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.15 Find My 케이스 거리 비교 실측
+- 가까울 때 Apple 12형 총 48 = `12:02 size4` 31회 + `12:02 size23` 17회, BLE 1484 / Apple 48.
+- 케이스만 멀리 옮긴 후 12형 총 14 = size4 8회 + size23 6회, BLE 1809 / Apple 99. 멀리 두었을 때 Apple 10:07 size9 신호가 85회 추가 관찰됨.
+- type12 약 70.8% 감소, size4 약 74.2%, size23 약 64.7% 감소. 같은 시간 측정상 케이스 거리에 따른 변화일 가능성은 있지만 **내 케이스의 신원은 미확인**, 다른 Apple 기기/스캔변동 배제 불가. AirGuard AirPods mask 0 / FD44 0 / 실제 소리 명령 미시도.
+- 공개 Find My 액세서리 규격상 12:02 짧은 nearby frame은 Find My pairing 이후의 형식임. 네 AirPods는 Galaxy만 페어링했으므로 주변 **타기기 광고** 가능성을 반드시 고려. AirPods5의 광고를 규격만으로 확정하지 말 것.
+- 같은 v115 측정 반복 요구보다 RSSI 기반 앱 내 대조/소유 기기 식별 검증이 다음 실험상 의미 있음. 임의 connectable 기기 6개에 GATT 접속 금지. GOLDEN v1.0.10 유지.
+- 최신 측정 근거 파일 `MY_AIRPODS5_FINDMY_V115_NEAR_FAR_PHYSICAL_EVIDENCE_20261015.md`.
+
+---
+
 ## 2026-10-15 v1.0.15 Find My 조사 실험판 실물검증 대기
 - Galaxy만 사용한 소유자 조건 유지, v1.0.10 GOLDEN 앱 보존.
 - 새 실험용 APK GitHub release `my-airpods5-v115-lab-r1`, 파일 `My_AirPods5_v1.0.15_FINDMY_BEACON_EVIDENCE_LAB.apk`.
