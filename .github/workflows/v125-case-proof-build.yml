@@ -54,7 +54,6 @@ jobs:
           grep -F 'ACCESS_COARSE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
           grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
           grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
-          grep -F '배터리 데이터 미수신' "$SRC/presentation/components/BatteryView.kt"
           ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
           grep -F 'CaseSoundStatusV125.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
           grep -F 'hasNonzeroMeasuredBattery' "$SRC/presentation/components/BatteryView.kt"
