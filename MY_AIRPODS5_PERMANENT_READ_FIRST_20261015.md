@@ -1,5 +1,15 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 18:30+ 사용자 스크린샷 IRK/배터리 회귀 원인 확인 및 v1.0.22 빌드
+- 실제 사용자 스크린샷: LAB 앱 배터리 영역 0%, 진단에서 이전 LAB BLE콜백 906/939, 이어버드 IRK 주소 일치 0; 수정 LAB v1.0.21은 블루투스 연결 전/후 `내 AirPods IRK 미수신`. 사용자 지적 타당.
+- 실제 LibrePods `BatteryView.kt`에서 left/right null을 0%로 렌더링한 버그 확인. 정상 v1.0.10 사용자 실제 배터리 표시 PASS와 별도로 LAB에는 독립 패키지 prefs 저장소가 있고 CI ephemeral debug signer라 이전 LAB 제거·재설치 시 `IRK`가 사라짐. 음악용 블루투스 연결만으로 LAB AACP L2CAP 키수신 보장하지 않음.
+- v1.0.22 LAB 패치 `ci/case_protocol_v122/patch_lab_irk_battery.py`: 없어진 배터리 0% 가짜 수치 제거하고 `배터리 데이터 미수신` 표기, 수신된 값은 그대로 유지, 자체 AACP 이미 연결된 경우에 한해 사용자가 `AACP 키 재요청` 선택 가능(기존 LibrePods 0x05 요청/6초 로컬 응답 확인). 자동 BLE GATT/사운드 명령 없음.
+- GitHub Actions `38714212956` SUCCESS, `BUILD SUCCESSFUL in 3m34s`, signed APK `my-airpods5-v122-lab-r1/My_AirPods5_v1.0.22_BATTERY_IRK_REPAIR_LAB.apk` size 51,408,721, SHA256 `db4916999080b60c2d0efc6c72fee8f967e973e7d041620c8a5bae6ba60cd056`, pkg `com.myairpods5.personal.lab` versionCode 10022.
+- **이 APK가 LAB의 실제 L/R/케이스 배터리 통신 복구나 케이스 Find My beep 성공을 증명하지는 않음.** 서명 변경으로 LAB uninstall 시 또 IRK 초기화됨. 사용자에게 근무 중 재설치 요구하지 말고, 정상 GOLDEN v1.0.10에서 배터리/ANC 사용. 추가 BLE 반복테스트 금지. 앞으로는 LAB 앱 독립 데이터와 Golden key 공유를 무작정 기대하지 않으며 인증 근거 확보 우선.
+- 상세 `MY_AIRPODS5_V122_LAB_BATTERY_IRK_REGRESSION_REPAIR_20261015.md`. 사용자 GOLDEN v1.0.10 및 AA Golden 불변.
+
+---
+
 ## 2026-10-15 18시 v1.0.20 '검색 권한 부족' 실제 원인과 v1.0.21 수정본 빌드 PASS
 - 사용자 실제 LOG: SM-S948N Android 17 sdk37, LAB v1.0.20 시작/ServiceConnection.init COMPLETE, `NO_JAVA_FATAL_CAPTURED`, 메뉴가 `검색 권한 부족`에 차단. **GATT 시도/케이스 사운드 단계 도달 전, 앱의 런타임 권한 가드에서 종료**. 원래 source `CaseOwnerProbeV120.open`은 BLUETOOTH_SCAN, BLUETOOTH_CONNECT, FINE LOCATION만 검사하고 앱 내 권한 요청 API가 전혀 없음.
 - Android 공식: Android12+ FINE 런타임 권한은 COARSE와 함께 요청해야 함. 새 `ci/case_protocol_v121/patch_lab_permission.py`는 LAB IRK 체크를 먼저 하고, 권한 부족 유형 표시, Nearby 기기 및 COARSE+FINE 정확 위치 승인 버튼, 앱 정보 화면 바로가기, 권한 승인 시 검색 재확인 대화상자(자동 스캔 없음) 구현. 소리/GATT 쓰기 미구현, 개인정보/좌표 수집 없음.
