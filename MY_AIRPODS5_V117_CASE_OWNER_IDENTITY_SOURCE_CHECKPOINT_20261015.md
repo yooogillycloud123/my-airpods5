@@ -35,3 +35,9 @@
 
 ## Negative result retained
 v1.0.16 12:02 size4 near 4 (-95dBm) / far 46 (-94dBm), owner-case identity NOT proven. Repeated BLE count experiments are not useful. All user's old evidence and Golden are preserved.
+
+## Independent second reference: LinuxPods implementation
+
+- https://github.com/mstroecker/LinuxPods/blob/main/docs/aap-key-retrieval.md explicitly demonstrates tested AirPods Pro 2/3 AAP L2CAP key retrieval, `0x30` request/`0x31` key response, `IRK` vs `ENC_KEY`. Proves this is a reproducible **bud-proximity** RPA key mechanism, not a case-owner authorization implementation.
+- GitHub Android-side research-only compile workflow `.github/workflows/compile-case-rpa-android-v117.yml` embeds pure Kotlin resolver in separate `com.myairpods5.personal.lab` project but does not publish/update user APK. The user's real Golden package/signing remain untouched.
+- Case owner-protocol ability still NOT demonstrated and must be sourced separately; user tests withheld until that gate is resolved.
