@@ -1,5 +1,14 @@
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
+## 2026-10-15 v1.0.17 Android 실제 소스 빌드 PASS (실기 요구 없음)
+- 동작 입증된 LibrePods의 BLE 주소확인(AES-128 IRK RPA)을 Kotlin 순수 모듈로 이식. KeySource EARBUD_AACP vs CASE_OWNER_HANDSHAKE_VERIFIED 구분, 어떤 주소 일치도 Find My 소리 제어 성공이나 케이스 소유자 인증으로 판정하지 않음.
+- GitHub 소스 브랜치 `airpods-personal-v111-updater-diagnostics`, `ci/case_protocol_v117/CaseRpaIdentity.kt`, 테스트 `CaseRpaIdentityTest.kt`.
+- Kotlin 독립 8개 오프라인 테스트 GitHub Actions `38683459680` SUCCESS; Android LAB 통합 실제 빌드 GitHub Actions `38683666006` SUCCESS, `BUILD SUCCESSFUL in 2m53s`, 앱 ID `com.myairpods5.personal.lab` v10017, APK SHA256 `e15e76d50798997f66f050ee88caaa0a7c9c8673f0e1cc49c309e12bcd2a6ba0`.
+- APK는 **내부 컴파일 검증 아티팩트로만 보관**(새 사운드 기능 없음), 사용자 설치·테스트 요구하지 않는다. 최초 실기 v1.0.10 Golden 보호.
+- 상세 소스 검증 및 다음 실제 차단점 문서 `MY_AIRPODS5_V117_CASE_OWNER_IDENTITY_SOURCE_CHECKPOINT_20261015.md`. 후속은 AirPods5 **케이스 자체** Find My GATT 소유자 인증/제어 전송 소스 또는 성공한 실물 trace 찾기이며, 확보 전 추정 opcode 시도 금지.
+
+---
+
 ## 2026-10-15 회사 추가테스트 없이 v1.0.17 실제 소스 단계 진행
 - 소스 중심 다음 단계 실제 수행: LibrePods 원본 Android BluetoothCryptography/BLEManager/AACPManager 및 독립 LinuxPods AAP IRK/ENC_KEY 구현을 비교 검증. 이어버드 proximity IRK 및 ENC_KEY와 케이스 Find My owner 인증키는 용도가 달라 혼동하면 안 됨.
 - 별도 LAB 브랜치 `airpods-personal-v111-updater-diagnostics/ci/case_protocol_v117/CaseRpaIdentity.kt`에 Bluetooth AES-128 `ah` 및 RPA 주소 판별을 Kotlin으로 구현, KEY_SOURCE provenance 단계 분리. 8개 독립 오프라인 테스트 PASS(독립 Python cryptography 기준 AES 벡터 포함). GitHub Actions source gate `38683459680` SUCCESS.
