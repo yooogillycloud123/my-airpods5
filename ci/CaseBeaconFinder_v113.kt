@@ -133,7 +133,10 @@ object CaseBeaconFinder {
             // Source-backed case frame: 29 20 header; fixed 8,10,11 zero;
             // battery fields <=100 or 0xff absent. Not cryptographic MAC,
             // but wrong keys almost never match this structured plaintext.
-            if(block[0]!=0x29.toByte() || block[1]!=0x20.toByte() ||
+            // The observed 29 20 case header is not guaranteed for AirPods5.
+            // Owner AES key, fixed bytes, bounded levels and 2 matching
+            // frames identify the case; never assume model 0x2920.
+            if(block[1]!=0x20.toByte() ||
                 block[8]!=0.toByte()||block[10]!=0.toByte()||block[11]!=0.toByte())return
             val cells=intArrayOf(block[3].toInt() and 0x7f,block[4].toInt() and 0x7f,
                 block[5].toInt() and 0x7f)
