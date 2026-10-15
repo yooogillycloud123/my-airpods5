@@ -18,7 +18,14 @@ addition="""object CaseSpeakerLab {
     }
 """
 assert s.count(anchor)==1
-case.write_text(s.replace(anchor,addition,1),encoding="utf-8")
+s=s.replace(anchor,addition,1)
+old='''finish("BLE 연결 종료", "상태코드: $status (GATT 연결이 허용되지 않았을 수 있음)")'''
+new='''finish("BLE 연결 종료", if (status == 147)
+                    "Android GATT_CONNECTION_TIMEOUT (147): 케이스 신호가 연결 가능 상태가 아니거나 주소가 변경됐습니다."
+                    else "BLE GATT 상태 코드: $status")'''
+assert s.count(old)==1
+s=s.replace(old,new,1)
+case.write_text(s,encoding="utf-8")
 settings=base/"presentation/screens/AppSettingsScreen.kt"
 s=settings.read_text(encoding="utf-8")
 old="me.kavishdevar.librepods.CaseSpeakerLab.open(it)"
