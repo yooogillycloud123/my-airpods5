@@ -1,0 +1,47 @@
+name: AA Capsule free-runner release security gates
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ci/aa_capsule_signed_apk_gate.py'
+      - 'ci/test_aa_capsule_signed_apk_gate.py'
+      - '.github/workflows/aa-capsule-release-gates.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capsule-release-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check original-signer release gate fails safely on synthetic invalid inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s ci -p test_aa_capsule_signed_apk_gate.py -v
+      - name: Assert main Golden app signing and package safety are pinned
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'com.aaairpods.r25fix' ci/aa_capsule_signed_apk_gate.py
+          grep -Fq 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23' ci/aa_capsule_signed_apk_gate.py
+          grep -Fq '49364923ba83acaa02d4e6a2b58251df7697182ff82a4b33ae22abbc94764623' ci/aa_capsule_signed_apk_gate.py
+      - name: Publish precise gate outcome (does not claim app compile)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          {
+            echo 'GOLDEN_CAPSULE_RELEASE_GATE=PASS'
+            echo 'SYNTHETIC_NEGATIVE_TESTS=PASS'
+            echo 'USER_GOLDEN_ORIGINAL_HELPERS_NOT_PUBLISHED=YES'
+            echo 'PRIVATE_KEY_NOT_PUBLISHED=YES'
+            echo 'ANDROID_APP_COMPILE=NOT_ATTEMPTED'
+            echo 'SIGNED_V26080_APK=NOT_BUILT'
+            echo 'CAPSULE_INTEGRATION=NOT_FINAL'
+          } | tee out/RESULT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AA_Capsule_public_release_safety_gate
+          path: out/RESULT.txt
