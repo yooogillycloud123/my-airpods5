@@ -43,12 +43,15 @@ OFFICIAL_CLAIMS = (
 )
 
 SUPPORTED_MODELS = frozenset({"A3529", "A3530"})
+# Empty until independently reviewed A3529/A3530 REAL authenticated case playback evidence exists.
+APPROVED_CASE_AUDIO_CAPTURE_HASHES = frozenset()
 
 def evaluate_target(
     case_label_model: str | None = None,
     owner_case_cryptographic_binding: bool = False,
     verified_case_audio_command: bool = False,
     closed_case_audible_test: bool = False,
+    reviewed_real_case_capture_sha256: str | None = None,
 ) -> dict:
     # A third-party printed model assertion without independent case-ownership
     # authentication is still not authorization to operate a BLE endpoint.
@@ -63,7 +66,10 @@ def evaluate_target(
     # case identity and never that a random FD44 tracker belongs to the owner.
     owner_authenticated = bool(owner_case_cryptographic_binding and physical_case_model)
     command_verified = bool(verified_case_audio_command and owner_authenticated)
-    case_beep_pass = bool(closed_case_audible_test and command_verified)
+    case_beep_pass = bool(
+        closed_case_audible_test and command_verified
+        and reviewed_real_case_capture_sha256 in APPROVED_CASE_AUDIO_CAPTURE_HASHES
+    )
     return {
         "schema": "airpods5-charging-case-source-gate-v1",
         "source_publications": [
@@ -82,9 +88,7 @@ def evaluate_target(
         "own_case_ble_cryptographic_binding": owner_authenticated,
         "verified_a3529_or_a3530_case_play_stop": command_verified,
         "real_both_buds_docked_lid_closed_audio_verified": case_beep_pass,
-        "test_apk_approved_for_case_sound": bool(
-            not contradictory and case_beep_pass
-        ),
+        "test_apk_approved_for_case_sound": case_beep_pass,
         "next_engineering_gate": (
             "VERIFY_DEVICE_MODEL_AND_BLE_CASE_OWNER_BINDING_FIRST"
             if not owner_authenticated
