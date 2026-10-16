@@ -2,7 +2,7 @@ name: REA actual Find My protocol APK comparison (AirGuard OSS)
 on:
   workflow_dispatch:
   push:
-    branches: [feature/rea-real-findmy-comparative-audit-20261016]
+    branches: [main, feature/rea-real-findmy-comparative-audit-20261016]
     paths:
       - 'tools/rea_airpods/compare_findmy_oss.py'
       - 'tools/rea_airpods/test_compare_findmy_oss.py'
