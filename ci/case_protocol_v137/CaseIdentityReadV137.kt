@@ -107,6 +107,7 @@ internal class CaseIdentityReadV137(
             "모델" -> when {
                 airpods && (raw.contains(" 5") || raw.contains("airpods5")) -> "AirPods 5 표기(미인증)"
                 airpods -> "AirPods 계열 표기(미인증)"
+                raw.contains("a3529") -> "A3529 표기(미인증)"
                 raw.contains("a3530") -> "A3530 표기(미인증)"
                 else -> "다른/불명 모델 표기(원문 비공개)"
             }
@@ -139,7 +140,7 @@ internal class CaseIdentityReadV137(
                 service.characteristics.any { it.uuid.toString().startsWith("8e0c0001", ignoreCase = true) }
         }
         val b = StringBuilder()
-        b.append("12:19 광고 = 분리 추적기 후보\n")
+        b.append("Find My 후보 · 광고 세부종류 미확인(신원 인증 아님)\n")
         b.append("FD44 비소유자 특성=").append(nonOwner).append('\n')
         b.append("FD44 소유자 관련 특성 존재=").append(ownerPoint).append(" (인증 아님)\n")
         b.append("DULT 특성=").append(dult).append('\n')
