@@ -14,6 +14,7 @@ import java.util.LinkedHashMap
  */
 internal class CaseIdentityReadV137(
     private val gatt: BluetoothGatt,
+    private val observedAdvertisement: String = "미확인",
     private val complete: (String) -> Unit
 ) {
     private val main = Handler(Looper.getMainLooper())
@@ -140,7 +141,7 @@ internal class CaseIdentityReadV137(
                 service.characteristics.any { it.uuid.toString().startsWith("8e0c0001", ignoreCase = true) }
         }
         val b = StringBuilder()
-        b.append("Find My 후보 · 광고 세부종류 미확인(신원 인증 아님)\n")
+        b.append("실제 수신 광고=").append(observedAdvertisement).append(" (신원 미인증)\n")
         b.append("FD44 비소유자 특성=").append(nonOwner).append('\n')
         b.append("FD44 소유자 관련 특성 존재=").append(ownerPoint).append(" (인증 아님)\n")
         b.append("DULT 특성=").append(dult).append('\n')
