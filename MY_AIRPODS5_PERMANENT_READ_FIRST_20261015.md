@@ -1,3 +1,12 @@
+## 2026-10-16 v1.0.37 새 읽기전용 GATT 신원 프로파일 실제 APK 빌드
+- 사용자 v136 실측 PASS(후보행 선택/GATT FD44 비소유자 UUID), 신원 UNKNOWN. 이를 실제 사용자 소유 AirPods5 케이스로 단정 금지.
+- v137 브랜치 `airpods-137-readonly-identity-profile-20261016`, GitHub Actions `38897400504` SUCCESS, 릴리스 `my-airpods5-v137-identity-readonly-r8`. APK `My_AirPods5_v1.0.37_READONLY_IDENTITY_PROFILE_LAB.apk`, SHA256 `19734234c523b58d8f75a6cfd7596793a9560ee76afbdcd187c1ceaec702b12f`, package `com.myairpods5.personal.identityprobe`, vCode 10037, v2 signer certificate `787d66a29fe20031f99cb9f873fea563b48832afa01085e63c22ad007f41b847`. 바이너리 ZIP/서명/source freeze PASS.
+- 기존 v136/v134 lab, 개인 v1.0.10 및 AA Golden 아무것도 삭제/수정하지 않는 독립 LAB APK. 새 기능: `2A29` 제조사, `2A24` 모델, `2A00` 일반 이름, `6AA50003` FindMy 장치 표기가 READ 허용된 경우에만 짧게 읽고 원시 식별정보 없이 범주 표시. FD44 비소유자/소유자 point 존재 구분; owner point 존재≠인증. 시리얼/주소 값 출력 금지; GATT 쓰기/페어링/소리 명령 0.
+- **v137 실기 아직 미검증**. 후보가 사용자 소유 기기인지 불확실하면 조회 취소. 12:19 다른 분리 추적기 가능성 유지. 원래 목표 AirPods5 두 이어버드 넣은 닫힌 케이스에서 audible Find My beep **미구현**.
+- 체크포인트: `MY_AIRPODS5_V137_READONLY_IDENTITY_APK_20261016.md` main. 같은 RSSI/후보 수만 반복 측정하지 말고 신원/인증 프로토콜 자료로 계속 진행.
+
+---
+
 ## 2026-10-16 사용자 v1.0.36 실제 스크린샷 — 후보 선택/GATT PASS, 케이스 신원 UNKNOWN
 - 새 `com.myairpods5.personal.caseprobe` vCode 10036에서 후보 1개 목록을 실제 터치하고 `내 기기 서비스 확인` → GATT 결과창까지 성공. 기존 1개 후보 목록 미표시 버그는 실기 PASS.
 - 실측: Apple Find My 12:19 후보 RSSI -85 dBm(주소 비공개), FD44 + `4F860003` 특성 TRUE, DULT(`15190001`+`8E0C0001`) FALSE, GATT 서비스 8개, 쓰기명령 0.
