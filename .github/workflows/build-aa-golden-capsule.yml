@@ -181,14 +181,38 @@ jobs:
           fi
           mkdir -p dist
           cp "$APK" dist/AA_AirPods_v26080_ORIGINAL_SIGNED_READONLY_CANDIDATE_NOT_FINAL.apk
+          # Separate independently installable OneApp2 LAB application: original Golden
+          # production package, helper packages, daemon and data remain untouched.
+          if ! gradle -p aa-airpods-bridge-v01 :app:assembleLabDebug --no-daemon --stacktrace > "$RUNNER_TEMP/aa-private-lab-compile.log" 2>&1; then
+            echo "::error title=INDEPENDENT_LAB_BUILD_FAILED::New parallel-install LAB APK compilation failed."
+            exit 50
+          fi
+          LAB=aa-airpods-bridge-v01/app/build/outputs/apk/lab/debug/app-lab-debug.apk
+          test -s "$LAB"
+          unzip -t "$LAB" > "$RUNNER_TEMP/aa-private-lab-zip-check.log"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$LAB" > "$RUNNER_TEMP/aa-private-lab-sign-check.log"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' "$RUNNER_TEMP/aa-private-lab-sign-check.log"
+          grep -Fqi "$AA_EXPECTED_SIGNER_SHA256" "$RUNNER_TEMP/aa-private-lab-sign-check.log"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$LAB" > "$RUNNER_TEMP/aa-private-lab-badging.log"
+          grep -Fq "package: name='com.aaairpods.oneapp.lab'" "$RUNNER_TEMP/aa-private-lab-badging.log"
+          grep -Fq "versionCode='26080'" "$RUNNER_TEMP/aa-private-lab-badging.log"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$LAB" AndroidManifest.xml > "$RUNNER_TEMP/aa-private-lab-manifest.log"
+          grep -Fq 'OneAppLabActivity' "$RUNNER_TEMP/aa-private-lab-manifest.log"
+          if grep -Eq 'com[.]aaairpods[.]r25fix[.](verifiedupdates|controllermode)' "$RUNNER_TEMP/aa-private-lab-manifest.log"; then
+            echo "::error title=LAB_MANIFEST_PROTECT_GOLDEN::Cannot install parallel LAB with original R25 provider authorities."
+            exit 51
+          fi
+          python3 qa/golden_capsule_verify_apk.py "$LAB" > "$RUNNER_TEMP/aa-private-lab-integrity.log"
+          cp "$LAB" dist/AA_OneApp2_Independent_v26080_SIGNED_LAB_NOT_FINAL.apk
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
           printf 'CODE=BUILT STATIC=PASS VEHICLE=NOT_TESTED CAPSULE_HELPER_MANAGER=NOT_IMPLEMENTED\\n' > dist/BUILD_STATUS.txt
       - name: Upload verified signed candidate (never publish private source)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: AA_GOLDEN_v26080_SIGNED_READONLY_NOT_FINAL
+          name: AA_ONEAPP2_AND_R25_v26080_SIGNED_LAB_NOT_FINAL
           path: |
             golden-src/dist/AA_AirPods_v26080_ORIGINAL_SIGNED_READONLY_CANDIDATE_NOT_FINAL.apk
+            golden-src/dist/AA_OneApp2_Independent_v26080_SIGNED_LAB_NOT_FINAL.apk
             golden-src/dist/SHA256SUMS.txt
             golden-src/dist/BUILD_STATUS.txt
           retention-days: 7
@@ -198,4 +222,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f -- "$RUNNER_TEMP/aa-r25-original.jks" "$RUNNER_TEMP/aa-private-source-checks.log" "$RUNNER_TEMP/aa-private-focus-tests.log" "$RUNNER_TEMP/aa-private-compile.log" "$RUNNER_TEMP/aa-private-keytool.log" "$RUNNER_TEMP/aa-private-signed-build.log" "$RUNNER_TEMP/aa-private-apk-check.log"
+          rm -f -- "$RUNNER_TEMP/aa-r25-original.jks" "$RUNNER_TEMP/aa-private-source-checks.log" "$RUNNER_TEMP/aa-private-focus-tests.log" "$RUNNER_TEMP/aa-private-compile.log" "$RUNNER_TEMP/aa-private-keytool.log" "$RUNNER_TEMP/aa-private-signed-build.log" "$RUNNER_TEMP/aa-private-apk-check.log" "$RUNNER_TEMP/aa-private-lab-compile.log" "$RUNNER_TEMP/aa-private-lab-zip-check.log" "$RUNNER_TEMP/aa-private-lab-sign-check.log" "$RUNNER_TEMP/aa-private-lab-badging.log" "$RUNNER_TEMP/aa-private-lab-manifest.log" "$RUNNER_TEMP/aa-private-lab-integrity.log"
