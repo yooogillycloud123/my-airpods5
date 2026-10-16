@@ -51,6 +51,8 @@ class IntegrationTests(unittest.TestCase):
             calls.append(cmd)
             if "inspect-android-package" in cmd:
                 data = {"normalized_result":{"package":OWN_PACKAGE,"provider":"jadx"}}
+            elif "inspect-android-method" in cmd:
+                data = {"normalized_result":{"method_name":"onCreate","source":"BACKGROUND_BLE_SCANNER_DISABLED_V139"}}
             else:
                 data = {"normalized_result":{"matches":[{"class_name":cmd[3]}]}}
             return subprocess.CompletedProcess(cmd, 0, json.dumps(data), "")
@@ -58,7 +60,8 @@ class IntegrationTests(unittest.TestCase):
         with patch("run_owned_apk_audit.subprocess.run", mock_rea):
             result = run(self.path, self.digest, out)
         self.assertEqual(result["rea_inspect_package"], "PASS")
-        self.assertEqual(len(calls), 1 + len(CLASSES))
+        self.assertEqual(len(calls), 2 + len(CLASSES))
+        self.assertEqual(result["rea_service_oncreate_static_method"], "PASS")
         self.assertTrue(all(c[-1] == "--json" for c in calls))
         self.assertFalse(result["case_speaker_command_recovered"])
         self.assertFalse(result["closed_case_speaker_sound_verified"])
