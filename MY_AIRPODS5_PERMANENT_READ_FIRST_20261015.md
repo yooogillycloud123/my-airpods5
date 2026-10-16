@@ -1,3 +1,11 @@
+## 2026-10-16 사용자 v1.0.36 실제 스크린샷 — 후보 선택/GATT PASS, 케이스 신원 UNKNOWN
+- 새 `com.myairpods5.personal.caseprobe` vCode 10036에서 후보 1개 목록을 실제 터치하고 `내 기기 서비스 확인` → GATT 결과창까지 성공. 기존 1개 후보 목록 미표시 버그는 실기 PASS.
+- 실측: Apple Find My 12:19 후보 RSSI -85 dBm(주소 비공개), FD44 + `4F860003` 특성 TRUE, DULT(`15190001`+`8E0C0001`) FALSE, GATT 서비스 8개, 쓰기명령 0.
+- **이것은 anti-stalking/non-owner service 확인이지 본인 AirPods5 A3530 케이스 인증이 아님.** 12:19는 Find My 규격에서 분리 광고이고, 제3자 Find My 태그 가능성 있음. AirPods5 자체의 등록/상태는 아직 원문 증명 없음. 서명 mismatch 및 미확인 대상 GATT write 위험 때문에 v137 신규 앱/소리명령으로 성급하게 진행하지 않는다.
+- 최신 실제 실기 결과/후속 소스 범위: `MY_AIRPODS5_V136_PHYSICAL_FD44_NONOWNER_EVIDENCE_20261016.md` (main). 기존 v136/개인 v1.0.10/AA Golden 삭제·초기화 금지. 후보 추가 스캔 반복 요구 금지. 다음은 케이스 소유자 식별 및 인증 채널을 원본 소스로 확인.
+
+---
+
 ## 2026-10-16 v1.0.36 후보 선택 오류 수정 · 기존 LAB 삭제 없는 병행 설치
 - 사용자 실제 v1.0.34 화면: 12:19 후보 1개인데 선택 행이 없고 취소만 표시됨. Android `AlertDialog.Builder`에서 `.setMessage`와 `.setItems` 병용하여 목록이 숨겨지는 소스 결함 직접 확인.
 - v1.0.35는 후보 행 선택 UI 수정 및 CI PASS였지만 기존 v1.0.34와 디버그 서명이 달라 정상 update-install 불가.
