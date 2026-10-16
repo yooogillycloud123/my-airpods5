@@ -119,3 +119,10 @@ print("V141_USER_PHYSICAL_SILENCE_ACK_ZERO_ZERO=PASS")
 print("V141_NO_REPEAT_NONOWNER_FD44_WRITE=PASS")
 print("V141_A2DP_SEPARATE_FROM_GATT_EVIDENCE=PASS")
 print("V141_SINGLE_USER_INITIATED_SCANNER=PASS")
+
+settings = base/"presentation/screens/AppSettingsScreen.kt"
+u = settings.read_text(encoding="utf8")
+assert u.count('AirPods / Find My 진단 v139 · LAB') == 1
+settings.write_text(u.replace('AirPods / Find My 진단 v139 · LAB',
+                              'A3529 케이스 · BLE 신원 검증 v141 · LAB'), encoding="utf8")
+print("V141_EXPERIMENT_MENU_VERSION_NOT_STALE=PASS")
