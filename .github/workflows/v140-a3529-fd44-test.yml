@@ -1,0 +1,120 @@
+name: My AirPods5 v1.0.40 A3529 opted-in FD44 nonowner trial
+on:
+  push:
+    branches: [airpods-140-a3529-manual-fd44-sound-experiment-20261017]
+    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**', 'ci/case_protocol_v140/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Prepare source and apply existing frozen patch series
+        run: |
+          set -euo pipefail
+          FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+          echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+          unzip -t "$FILE" | tail -1
+          unzip -q "$FILE" -d input
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 ci/patch_personal_v111_updater_logs.py input/app_source "$PWD"
+          python3 ci/patch_v112.py input/app_source "$PWD"
+          python3 ci/patch_v113.py input/app_source "$PWD"
+          python3 ci/patch_v114_unfiltered_case_ble.py input/app_source
+          python3 ci/patch_v115_findmy_radio_audit.py input/app_source "$PWD"
+          python3 ci/patch_v116_observed_rssi.py input/app_source
+          python3 ci/case_protocol_v117/patch_android_lab_case_identity.py input/app_source "$PWD"
+          python3 ci/case_protocol_v120/patch_lab_preflight.py input/app_source "$PWD"
+          python3 ci/case_protocol_v121/patch_lab_permission.py input/app_source
+          python3 ci/case_protocol_v122/patch_lab_irk_battery.py input/app_source
+          python3 ci/case_protocol_v124/patch_lab_independent_case.py input/app_source "$PWD"
+          python3 ci/case_protocol_v125/patch_lab_safe_battery.py input/app_source "$PWD"
+          python3 ci/case_protocol_v126/patch_capod_model_battery.py input/app_source
+          # Known BLEManager.kt is the ONLY intentional frozen-engine exception.
+          # The exact source-bundle SHA and every other source remain protected.
+          grep -v '/bluetooth/BLEManager.kt$' input/PRISTINE_ENGINE_SHA256.txt > input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt
+          mv input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt input/PRISTINE_ENGINE_SHA256.txt
+          python3 ci/case_protocol_v126/test_model_battery_contract.py "$SRC/bluetooth/BLEManager.kt"
+          python3 ci/case_protocol_v125/test_battery_presentation_gate.py "$SRC"
+          python3 ci/case_protocol_v134/patch_v134.py input/app_source "$PWD"
+          python3 ci/case_protocol_v135/patch_and_assert_candidate_picker.py input/app_source
+          python3 ci/case_protocol_v136/patch_safe_parallel.py input/app_source
+          python3 ci/case_protocol_v137/patch_case_identity_v137.py input/app_source "$PWD"
+          python3 ci/case_protocol_v138/patch_case_radio_v138.py input/app_source "$PWD"
+          python3 ci/case_protocol_v139/patch_lab_single_scanner.py input/app_source "$PWD"
+          python3 ci/case_protocol_v140/patch_v140.py input/app_source "$PWD"
+          python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
+          python3 ci/case_protocol_v123/test_case_session_evidence.py
+          python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          grep -F 'versionCode = 10040' input/app_source/android/app/build.gradle.kts
+          test -s "$SRC/CaseIdentityReadV137.kt"
+          test -s "$SRC/CaseRadioEvidenceV138.kt"
+          grep -F 'CaseIdentityReadV137(g)' "$SRC/CasePathV134.kt"
+          grep -F 'ACCESS_COARSE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
+          grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
+          grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
+          ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
+          grep -F 'CaseRadioEvidenceV138.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'BACKGROUND_BLE_SCANNER_DISABLED_V139' "$SRC/services/AirPodsService.kt"
+          test -s "$SRC/CaseLabInventoryV139.kt"
+          test -s "$SRC/CasePathV134.kt"
+          grep -F 'FD44' "$SRC/CaseIdentityReadV137.kt"
+          grep -F '15190001' "$SRC/CaseIdentityReadV137.kt"
+          grep -F 'hasNonzeroMeasuredBattery' "$SRC/presentation/components/BatteryView.kt"
+          grep -F '배터리 정보 확인 안 됨 (0%로 단정하지 않음)' "$SRC/presentation/components/BatteryView.kt"
+          ! grep -F 'CaseResearchMenuV124.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          echo 'V125_RETIRED_REFUTED_SCAN=PASS'
+          echo 'V126_SINGLE_BLEMANAGER_EXEMPTION_WITH_EXACT_ANCHORS=PASS'
+          echo 'V134_READ_ONLY_OWNED_CANDIDATE_GATT_UUID_DISCOVERY=PASS'
+          echo 'V140_A3529_FD44_NONOWNER_SOUND_TRIAL_COMPILED_NOT_PHYSICAL_PASS'
+      - name: Install SDK and compile lab
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "sdk.dir=$ANDROID_HOME" > input/app_source/android/local.properties
+          cd input/app_source/android
+          chmod +x gradlew
+          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --console=plain --max-workers=2
+      - name: Verify signed APK and stage release
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK=dist/My_AirPods5_v1.0.40_A3529_FD44_NONOWNER_EXPLICIT_TEST.apk
+          cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
+          unzip -t "$APK" | tail -1
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal.radiolab'" dist/PACKAGE.txt
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CasePathV134' >/dev/null
+          echo 'V134_CASE_PATH_CLASS_IN_REAL_APK=PASS'
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseSoundTrialV140' >/dev/null
+          echo 'V140_REAL_GATT_EXPERIMENT_IN_COMPILED_DEX=PASS'
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
+          sha256sum "$APK" | tee dist/SHA256.txt
+          cp input/app_source/LICENSE dist/LICENSE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MyAirPods5_v140_A3529_FD44_Trial
+          path: dist/*
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "my-airpods5-v140-a3529-fd44-manual-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.40 experimental A3529 FindMy nonowner sound GATT opt-in' --notes 'SAME APP ID com.myairpods5.personal.radiolab as v138: Android debug certificates DIFFER, so direct update install not possible. DO NOT install on top. To replace, manually uninstall ONLY the 1.0.38 AirPods 신호 확인 LAB (this erases its local diagnostic/app keys if any), then install v1.0.39. This does not change number of apps. Do NOT remove personal baseline com.myairpods5.personal or older 1.0.34 LAB with possible IRK. Existing 1.0.36 and 1.0.37 clones can be force-stopped via Android App Info to avoid redundant scan. v139 turns OFF only its own cloned AirPodsService background BLE scan, leaving 1 on-demand scan, fixes v138 overlapping 12:02 other12 count, reports 12:19 non-connectable and ephemeral distinct address counts with no raw IDs. Has non-destructive LAB app role management screen. Manual opted-in FD44 NONOWNER sound START trial on explicitly selected connectable candidate only (may NOT be own A3529). No pairing resets. Physical closed-case beep NOT VERIFIED, no Apple owner authentication. Debug signature rotating: existing v139 radiolab cannot directly update. Uninstall ONLY radiolab if willing; NEVER delete original personal or v134 key store.' --prerelease
