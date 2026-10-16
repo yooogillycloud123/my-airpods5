@@ -1,3 +1,11 @@
+## 2026-10-16 v139 사용자 실기 새 증거: 스캐너/표시 PASS, 12:02=13·임시 주소5, 케이스 소리 여전히 미구현
+- 실제 v139 최종창: 전체 BLE=307, Apple=29, FindMy `12:02` 13회(세션 내 임시 주소 5), `12:19` 연결가능·불가 모두 0, `07:19` 0, 0x3020/3620 0, Nearby10 0, 기타 12형 0. `v139_MANUAL_SCAN_AND_UI_PHYSICAL_PASS`, **본인 케이스 신원/GATT owner 인증/스피커 소리 미구현**. 임시 주소 5개는 **실물 기기 5개를 뜻하지 않음**.
+- v138 중복 집계 오류 수정 실기 반영 확인. 자체 `AirPodsService` 상시 BLE 스캔 OFF 소스 게이트는 PASS이나 **다른 설치 앱의 BLE 스캐너가 모두 비활성인지 확인된 건 아님**. 12:19 과거 1개 후보의 정체 미확인. 12:02와 그 후보 연결 추정 금지.
+- Apple 공식 KR AirPods5 무선충전 케이스 A3530/FindMy 하드웨어 스피커 존재 확인; LibrePods #102 maintainer는 충전 케이스 소리 기능이 이어버드 AACP가 아니라 **소유자 인증된 케이스 GATT 경로**라고 명시했고 README에서는 아직 역공학 미완료. 8/12/35초 BLE 재검색용 신규 APK 제작/설치 금지. 다음은 케이스 자체 신원/인증/사운드 원본 프로토콜 출처 확보가 선결.
+- 상세 실제 사용자 증거 `MY_AIRPODS5_V139_REAL_PHONE_307_29_NEARBY13_5_TEMP_ADDR_CASE_GATE_20261016.md`. v139 동일 앱 유지, 개인 v1.0.10·v134 키 가능 데이터·AA Golden 전부 보존. 서명 고정 전 다음 update-install 주장 금지.
+
+---
+
 ## 2026-10-16 v139 실제 APK 완성: v138과 동일 앱 ID로 교체 / 설치 총개수 증가 금지
 - 사용자는 개인 원본 1개+LAB 4개를 지적하면서 더 이상 6번째 앱 설치를 요구하지 말라고 명시. v139을 **v138과 동일 패키지 `com.myairpods5.personal.radiolab`**로 제작. CI `38904151411` SUCCESS, 릴리스 `my-airpods5-v139-one-lab-replace-r11`; SHA256 `380a26787fc0217ee0068dc24653ffb04731279f5e505e78b0d24deb683ca055`, 51,490,701 bytes, cert `6d73e4b2c659d6b3e5f38d83fe4fc6eed9e268254841c3664b14c3363a03ba39`. CI+zip/v2 signer/independent extracted APK hash PASS, v139 실기 미확인.
 - 실험 LAB v139 **자체 AirPodsService 상시 BLE 스캔 OFF**(사용자 수동 12초 검색만 1개), 12:02/12:19/other12 중복 집계 수정, 12:19 비연결 신호와 임시 주소별 카운트 구분, 메인 설정 대화상자 `실험앱 관리`에서 기존 설치앱 역할과 Android 앱 정보 바로가기 표시. 백그라운드에서 다른 앱을 강제종료/삭제하지 않음.
