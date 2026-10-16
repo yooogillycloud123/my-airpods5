@@ -112,7 +112,13 @@ jobs:
         run: |
           set -euo pipefail
           if ! gradle -p aa-airpods-bridge-v01 :app:compileProductionDebugJavaWithJavac --no-daemon --stacktrace > "$RUNNER_TEMP/aa-private-compile.log" 2>&1; then
-            echo "::error title=PRIVATE_SOURCE_COMPILE_FAILED::Android production compilation failed; private source diagnostics are not published."
+            category=UNKNOWN
+            if grep -Eq 'Could not resolve|Could not find .*:[0-9]|Failed to resolve' "$RUNNER_TEMP/aa-private-compile.log"; then category=DEPENDENCY_RESOLUTION;
+            elif grep -Eq 'error:|Compilation failed|compileProductionDebugJavaWithJavac FAILED' "$RUNNER_TEMP/aa-private-compile.log"; then category=JAVA_COMPILATION;
+            elif grep -Eq 'SDK location not found|Failed to find Build Tools|Android SDK' "$RUNNER_TEMP/aa-private-compile.log"; then category=ANDROID_SDK;
+            elif grep -Eq 'Could not determine java version|Unsupported class file major version' "$RUNNER_TEMP/aa-private-compile.log"; then category=JAVA_GRADLE_VERSION;
+            fi
+            echo "::error title=PRIVATE_SOURCE_COMPILE_FAILED::Android compile failed. CATEGORY=$category. Private source, signing material and raw build log are not published."
             exit 46
           fi
           echo "Exact production Java compilation passed."
