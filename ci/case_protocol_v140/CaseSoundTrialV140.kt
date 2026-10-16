@@ -21,6 +21,8 @@ object CaseSoundTrialV140 {
     var conn: BluetoothGatt? = null
     var done = false
     var response = "no start"
+    var stopQueued = false
+    var soundChar: BluetoothGattCharacteristic? = null
     fun finish(reason: String) {
       if (done) return
       done = true
@@ -54,12 +56,34 @@ object CaseSoundTrialV140 {
               @Suppress("DEPRECATION") c.value = bytes
               @Suppress("DEPRECATION") g.writeCharacteristic(c)
             }
+            soundChar = c
             response = if (queued) "start request queued" else "start request rejected"
             if (!queued) finish("명령 전송 불가")
           }
           override fun onCharacteristicWrite(g: BluetoothGatt, c: BluetoothGattCharacteristic, status: Int) {
-            response = "start write status " + status
-            handler.postDelayed({ finish("한 번의 짧은 테스트 종료") }, 2000L)
+            if (done) return
+            if (stopQueued) {
+              response += "; stop GATT status=" + status
+              finish("시작 및 중지 1회 시험 종료")
+              return
+            }
+            response = "start GATT status=" + status
+            if (status != 0) { finish("시작 명령 GATT 응답 실패"); return }
+            handler.postDelayed({
+              if (!done && !stopQueued) {
+                stopQueued = true
+                val stop = byteArrayOf(1,1,3)
+                val queued = try {
+                  if (Build.VERSION.SDK_INT >= 33)
+                    g.writeCharacteristic(c, stop, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == 0
+                  else {
+                    @Suppress("DEPRECATION") c.value = stop
+                    @Suppress("DEPRECATION") g.writeCharacteristic(c)
+                  }
+                } catch (_: Exception) { false }
+                if (!queued) finish("중지 명령 큐 전송 실패")
+              }
+            }, 2000L)
           }
         }, BluetoothDevice.TRANSPORT_LE)
       handler.postDelayed({ finish("시간 초과") }, 12000L)
