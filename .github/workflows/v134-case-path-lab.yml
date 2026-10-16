@@ -91,11 +91,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          APK=dist/My_AirPods5_v1.0.36_SAFE_PARALLEL_CASE_PICKER_LAB.apk
+          APK=dist/My_AirPods5_v1.0.37_READONLY_IDENTITY_PROFILE_LAB.apk
           cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
-          grep -F "name='com.myairpods5.personal.caseprobe'" dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal.identityprobe'" dist/PACKAGE.txt
           unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CasePathV134' >/dev/null
           echo 'V134_CASE_PATH_CLASS_IN_REAL_APK=PASS'
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
@@ -103,10 +103,10 @@ jobs:
           cp input/app_source/LICENSE dist/LICENSE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: MyAirPods5_v136_parallel_case_picker
+          name: MyAirPods5_v137_readonly_identity_lab
           path: dist/*
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "my-airpods5-v136-parallel-picker-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v1.0.36 SAFE parallel tappable case candidates LAB' --notes 'INSTALLS ALONGSIDE existing v1.0.34 LAB because each CI debug signer is different. Package com.myairpods5.personal.caseprobe (different from com.myairpods5.personal.lab), distinct launcher name; DO NOT uninstall either current LAB or personal v1.0.10; no data/pairing reset. v135 candidate dialog bug fixed: selectable rows then explicit service-only confirmation. Read-only FD44/DULT GATT service discovery, zero Play Sound commands. Observing a candidate does NOT prove it is the user-owned A3530. Main audio and Android Auto untouched. Future permanent signing still needed for in-place upgrades.' --prerelease
+          gh release create "my-airpods5-v137-identity-readonly-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v137 safe identity read-only LAB' --notes 'Independent lab identity metadata probe. Does not ring a case, assert owner identity, delete other app data, or modify pairing. Reads only available GATT manufacturer/model/name values, classifies without raw identifiers, and reports FD44 owner/non-owner point presence. Actual AirPods5 case identity and authenticated speaker control remain unverified.' --prerelease
