@@ -53,7 +53,7 @@ def inspect_sources(airpods: str, findmy: str) -> dict:
         "fd44_nonowner_start_opcode":"01 00 03",
         "fd44_nonowner_stop_opcode":"01 01 03",
         "fd44_sound_protocol_in_public_source":True,
-        "fd44_user_a3530_case_auth_proven":False,
+        "fd44_user_wireless_case_auth_proven":False,
         "fd44_case_sound_observed_by_user":False,
         "gatt_write_ack_implies_physical_case_sound":False,
         "apple_findmy_owner_case_credential_available":False,
