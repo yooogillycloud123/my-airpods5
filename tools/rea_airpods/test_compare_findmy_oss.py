@@ -51,7 +51,7 @@ class TestFindMyCompare(unittest.TestCase):
         self.assertTrue(all(x=="DECOMPILED_BODY_OBSERVED" for x in result["methods"].values()))
         self.assertFalse(result["claim_user_closed_a3530_beep"])
         self.assertFalse(result["raw_decompilation_released"])
-        self.assertNotIn("normalized_result",out.read_text())
+        self.assertNotIn('"source":',out.read_text())
 
     def test_bad_engine_fails_closed(self):
         with patch("compare_findmy_oss.cli_json",return_value={"normalized_result":{}}):
