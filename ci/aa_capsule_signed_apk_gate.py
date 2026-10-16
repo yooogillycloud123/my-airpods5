@@ -52,11 +52,11 @@ def inspect_signed_apk(path: Path, *, min_version:int=26080,
         resources=z.getinfo("resources.arsc")
         need(resources.compress_type==zipfile.ZIP_STORED,"RESOURCES_NOT_STORED")
         need(resources.header_offset>=0,"RESOURCES_BAD_OFFSET")
-        dexes=sorted(n for n in names if re.fullmatch(r"classes(?:[2-9][0-9]*)?\\.dex",n))
+        dexes=sorted(n for n in names if re.fullmatch(r"classes(?:[2-9][0-9]*)?\.dex",n))
         need(bool(dexes),"NO_CLASSES_DEX")
         for dex in dexes:
             b=z.read(dex)
-            need(len(b)>=112 and b[:4]==b"dex\\n".replace(b"\\n",b"\n"),"DEX_MAGIC_"+dex)
+            need(len(b)>=112 and b[:4]==b"dex\n".replace(b"\n",b"\n"),"DEX_MAGIC_"+dex)
             need(b[12:32]==hashlib.sha1(b[32:]).digest(),"DEX_SHA1_"+dex)
             need(struct.unpack_from("<I",b,8)[0]==(zlib.adler32(b[12:])&0xffffffff),
                  "DEX_ADLER32_"+dex)
@@ -72,12 +72,12 @@ def inspect_signed_apk(path: Path, *, min_version:int=26080,
     signature=_run("apksigner","verify","--verbose","--print-certs",str(path))
     need("Verified using v2 scheme (APK Signature Scheme v2): true" in signature,
          "APK_V2_SIGNATURE_REQUIRED")
-    fingerprint=re.search(r"Signer #1 certificate SHA-256 digest:\\s*([0-9A-Fa-f:]+)",signature)
+    fingerprint=re.search(r"Signer #1 certificate SHA-256 digest:\s*([0-9A-Fa-f:]+)",signature)
     need(bool(fingerprint),"NO_SIGNER_FINGERPRINT")
     got=fingerprint.group(1).replace(":","").lower()
     need(got==CERT,"NOT_ORIGINAL_R25_SIGNER")
     badge=_run("aapt","dump","badging",str(path))
-    matched=re.search(r"^package:\\s+name='([^']+)'\\s+versionCode='([0-9]+)'",badge,re.MULTILINE)
+    matched=re.search(r"^package:\s+name='([^']+)'\s+versionCode='([0-9]+)'",badge,re.MULTILINE)
     need(bool(matched) and matched.group(1)==PKG,"NOT_R25_PACKAGE")
     version=int(matched.group(2))
     need(version>=min_version,"APK_VERSION_TOO_LOW")
