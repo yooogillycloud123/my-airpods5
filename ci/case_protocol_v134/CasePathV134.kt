@@ -116,8 +116,7 @@ object CasePathV134 {
             val labels = items.mapIndexed { i, v ->
                 "${i + 1}: Apple Find My 후보 ...${v.first.address.takeLast(5)} / ${v.second} dBm"
             }.toTypedArray()
-            AlertDialog.Builder(a).setTitle("후보 ${items.size}개 · 케이스 신원 미확인")
-                .setMessage("사용자 소유가 확실한 대상만 선택하세요. 다른 사람 기기는 선택하지 마세요.")
+            AlertDialog.Builder(a).setTitle("후보 ${items.size}개 · 항목 눌러 선택")
                 .setItems(labels) { _, index ->
                     val device = items[index].first
                     AlertDialog.Builder(a).setTitle("읽기 전용 연결")
