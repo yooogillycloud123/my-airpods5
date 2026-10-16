@@ -40,7 +40,7 @@ class TestFindMyCompare(unittest.TestCase):
             if args[1]=="search-android-classes":
                 return {"normalized_result":{"matches":[{"class_name":args[3]}]}}
             if args[1]=="inspect-android-method":
-                return {"normalized_result":{"body_status":"available","source":"this is decompiled source text with enough bytes and a method body"}}
+                return {"normalized_result":{"body_status":"available","source":{"status":"complete","text":"this is decompiled source text with enough bytes and a method body","reported_total_bytes":64}}}
             raise AssertionError(args)
         out=Path(self.temp.name)/"safe.json"
         with patch("compare_findmy_oss.cli_json",side_effect=mocked_cli):
