@@ -102,7 +102,6 @@ v141_once("읽기 전용 조회는 소리 명령을 보내지 않습니다. 별�
 v141_once("v140 A3529 · 소리 경로 시험","v141 A3529 · BLE/오디오 분리 판정")
 v141_once("A3529 구매박스 확인. 케이스 찾기 소리 성공은 미검증",
           "A3529 박스 확인. v140 GATT ACK=0/0, 실제 케이스 소리 없음")
-v141_once('"검색을 자동 반복하지 않습니다."', '"검색을 자동 반복하지 않습니다."')
 p.write_text(q,encoding="utf8")
 # Target is original case (A3529 SKU). This model proof is NOT BLE ownership proof.
 g=gradle.read_text(encoding="utf8")
