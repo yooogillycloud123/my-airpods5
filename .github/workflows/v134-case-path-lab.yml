@@ -2,7 +2,7 @@ name: My AirPods5 v1.0.37 case identity (LAB)
 on:
   push:
     branches: [airpods-137-readonly-identity-profile-20261016]
-    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**']
+    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**']
   workflow_dispatch:
 permissions:
   contents: write
@@ -55,11 +55,14 @@ jobs:
           python3 ci/case_protocol_v134/patch_v134.py input/app_source "$PWD"
           python3 ci/case_protocol_v135/patch_and_assert_candidate_picker.py input/app_source
           python3 ci/case_protocol_v136/patch_safe_parallel.py input/app_source
+          python3 ci/case_protocol_v137/patch_case_identity_v137.py input/app_source "$PWD"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
           python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10036' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10037' input/app_source/android/app/build.gradle.kts
+          test -s "$SRC/CaseIdentityReadV137.kt"
+          grep -F 'CaseIdentityReadV137(g)' "$SRC/CasePathV134.kt"
           grep -F 'ACCESS_COARSE_LOCATION' input/app_source/android/app/src/main/AndroidManifest.xml
           grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
           grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
