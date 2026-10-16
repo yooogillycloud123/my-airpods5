@@ -1,7 +1,7 @@
-name: My AirPods5 v1.0.36 safe parallel candidate picker (LAB)
+name: My AirPods5 v1.0.37 case identity (LAB)
 on:
   push:
-    branches: [airpods-136-parallel-picker-preserve-lab-20261016]
+    branches: [airpods-137-readonly-identity-profile-20261016]
     paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**']
   workflow_dispatch:
 permissions:
