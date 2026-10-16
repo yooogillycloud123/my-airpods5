@@ -1,8 +1,8 @@
-name: My AirPods5 v1.0.38 AirPods5 07:19 versus FindMy 12:19 passive evidence
+name: My AirPods5 v1.0.39 ONE LAB / no background scanner / replaces v138
 on:
   push:
-    branches: [airpods-138-dual-airpods-findmy-observation-20261016]
-    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**']
+    branches: [airpods-139-singlelab-replace-v138-20261016]
+    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**']
   workflow_dispatch:
 permissions:
   contents: write
@@ -57,11 +57,12 @@ jobs:
           python3 ci/case_protocol_v136/patch_safe_parallel.py input/app_source
           python3 ci/case_protocol_v137/patch_case_identity_v137.py input/app_source "$PWD"
           python3 ci/case_protocol_v138/patch_case_radio_v138.py input/app_source "$PWD"
+          python3 ci/case_protocol_v139/patch_lab_single_scanner.py input/app_source "$PWD"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
           python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10038' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10039' input/app_source/android/app/build.gradle.kts
           test -s "$SRC/CaseIdentityReadV137.kt"
           test -s "$SRC/CaseRadioEvidenceV138.kt"
           grep -F 'CaseIdentityReadV137(g)' "$SRC/CasePathV134.kt"
@@ -70,6 +71,8 @@ jobs:
           grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
           ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
           grep -F 'CaseRadioEvidenceV138.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'BACKGROUND_BLE_SCANNER_DISABLED_V139' "$SRC/services/AirPodsService.kt"
+          test -s "$SRC/CaseLabInventoryV139.kt"
           test -s "$SRC/CasePathV134.kt"
           grep -F 'FD44' "$SRC/CaseIdentityReadV137.kt"
           grep -F '15190001' "$SRC/CaseIdentityReadV137.kt"
@@ -93,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          APK=dist/My_AirPods5_v1.0.38_AIRPODS5_FINDMY_SPLIT_EVIDENCE_LAB.apk
+          APK=dist/My_AirPods5_v1.0.39_ONE_LAB_SINGLE_SCANNER_REPLACE_V138.apk
           cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -105,10 +108,10 @@ jobs:
           cp input/app_source/LICENSE dist/LICENSE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: MyAirPods5_v138_split_airpods_findmy_lab
+          name: MyAirPods5_v139_single_lab_replace_v138
           path: dist/*
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "my-airpods5-v138-split-radio-evidence-r${GITHUB_RUN_NUMBER}" dist/* --title 'My AirPods5 v1.0.38 AirPods5 proximity 07:19 and FindMy 12:19 separated BLE evidence (LAB)' --notes 'Independent installation package com.myairpods5.personal.radiolab. Prior v136/v137, v134 and personal v1.0.10 remain untouched. Previously 12:19 separated accessory was misnamed as the only AirPods case candidate. New single 12-second unfiltered Apple manufacturer scan independently reports AirPods Continuity 07:19 and claimed model 0x3020 or 0x3620, separate 12:19 Find My and 12:02 nearby, and Pro3 07:11:06. No arbitrary case identification, no sound writes, no automatic repeated scanning, no changes to pairing or original audio engine. A claimed 0x3020 is just broadcast model evidence, not certified owner/case. Optional user-confirmed 12:19 GATT is read-only and cannot identify AirPods5 owner; prior actual 8 GATT services were from unverified advertising device. Actual closed-case audible beep remains NOT IMPLEMENTED. Temporary CI signer changes across builds, do not uninstall previous applications.' --prerelease
+          gh release create "my-airpods5-v139-one-lab-replace-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.39 ONE active LAB, disables own automatic BLE scan, replaces v138' --notes 'SAME APP ID com.myairpods5.personal.radiolab as v138: Android debug certificates DIFFER, so direct update install not possible. DO NOT install on top. To replace, manually uninstall ONLY the 1.0.38 AirPods 신호 확인 LAB (this erases its local diagnostic/app keys if any), then install v1.0.39. This does not change number of apps. Do NOT remove personal baseline com.myairpods5.personal or older 1.0.34 LAB with possible IRK. Existing 1.0.36 and 1.0.37 clones can be force-stopped via Android App Info to avoid redundant scan. v139 turns OFF only its own cloned AirPodsService background BLE scan, leaving 1 on-demand scan, fixes v138 overlapping 12:02 other12 count, reports 12:19 non-connectable and ephemeral distinct address counts with no raw IDs. Has non-destructive LAB app role management screen. No GATT writes, no Find My case sound command, no pairing resets. Actual AirPods5 closed-case beep is NOT implemented or physically verified.' --prerelease
