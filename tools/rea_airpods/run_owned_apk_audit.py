@@ -77,6 +77,16 @@ def run(apk: Path, expected: str, output: Path) -> dict:
         found[token] = token in body
     if not found["AirPodsService"]:
         raise RuntimeError("Protected original service not present in REA class results")
+    # Inspect a REAL DEX method, not only ZIP/Dex class names. The report below
+    # records observed static facts and NEVER asserts case owner GATT support.
+    oncreate = cli_json([
+        "rea", "inspect-android-method", str(apk),
+        "me.kavishdevar.librepods.services.AirPodsService", "onCreate", "--json",
+    ])
+    decompiled = json.dumps(oncreate, sort_keys=True)
+    if "onCreate" not in decompiled:
+        raise RuntimeError("REA did not verify expected source method identity")
+    marker = "BACKGROUND_BLE_SCANNER_DISABLED_V139" in decompiled
     # Search false negatives remain unknown, not inferred absence.
 
     report = {
@@ -91,6 +101,8 @@ def run(apk: Path, expected: str, output: Path) -> dict:
         "dex_file_count": proof["dex_file_count"],
         "rea_inspect_package": "PASS",
         "rea_airpods_service_search": "PASS",
+        "rea_service_oncreate_static_method": "PASS",
+        "rea_service_own_ble_scanner_disabled_marker": "OBSERVED_IN_STATIC" if marker else "NOT_OBSERVED",
         "rea_case_radio_search": "FOUND" if found["CaseRadioEvidenceV138"] else "NOT_OBSERVED",
         "rea_lab_inventory_search": "FOUND" if found["CaseLabInventoryV139"] else "NOT_OBSERVED",
         "apk_executed": False,
