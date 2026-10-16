@@ -1,3 +1,13 @@
+## 2026-10-16 v138 실물 후보 0 원인 구조 수정 / 새 APK 빌드 PASS (사용자 실기 대기)
+- v136 실측 12:19 후보 1개/FD44 TRUE/GATT 8개는 본인 AirPods5 케이스로 증명되지 않음. v137 설치 후 이전 v136까지 12:19=0, BLE callback=396. Android scanner 자체는 동작.
+- **소스의 확정적 설계 결함**: v134~v137은 `12 19` 분리 Find My 추적기 광고만 '에어팟 후보'로 취급하여 **AirPods5 주변 연결용 `07 19` 광고를 아예 놓침**. 그렇다고 실측 12:19 신호가 왜 사라졌는지 특정되거나, 그 기기가 본인 AirPods 케이스였다고 입증되는 것은 아님.
+- 신규 `v1.0.38`: `airpods-138-dual-airpods-findmy-observation-20261016`, Actions `38900664575` SUCCESS, release `my-airpods5-v138-split-radio-evidence-r9`. APK `My_AirPods5_v1.0.38_AIRPODS5_FINDMY_SPLIT_EVIDENCE_LAB.apk`, SHA256 `c2776b45ade28162206703cca6ea2ea2185a916ddb3bd95e931304e4fd4dd2a6`, package `com.myairpods5.personal.radiolab`, vCode 10038, signer `5fb1ae433e2c921ac129920c59fd5a1e83a306c83c4c0008e331f9b4d0b81379`. 물리 테스트 아직 안 함.
+- 한번만 12초 수동 BLE 스캔하여 **07:19 AirPods 모델 광고(0x3020/0x3620)**, **12:19 분리 Find My**, 12:02 nearby, Pro3 07:11:06 등을 구분. 07:19 모델 표시 = 케이스 소유 인증이 아님. 12:19 옵션 GATT도 사용자 확인된 소유 기기에서만 READ-ONLY. 소리/페어링/GATT write 0.
+- 기존 `com.myairpods5.personal` 부분 검증 v1.0.10 및 v134/v136/v137 LAB, AA Golden 모두 불변, 실험용 다른 패키지 설치. 같은 신호가 무선으로 송출되지 않는 시간에는 어떤 APK도 특정 후보를 강제로 찾을 수 없음. 추가 35초 반복 검색 요구 금지.
+- 상세: `MY_AIRPODS5_V138_AIRPODS_PROXIMITY_VS_FINDMY_RADIO_FIX_20261016.md` (main). 사용자 v138 요약 결과 한 번 받은 뒤 **AirPods5 케이스 자체 신원/owner 인증/사운드 명령** 계속 연구. 실물 삐삐 아직 미구현.
+
+---
+
 ## 2026-10-16 v1.0.37 새 읽기전용 GATT 신원 프로파일 실제 APK 빌드
 - 사용자 v136 실측 PASS(후보행 선택/GATT FD44 비소유자 UUID), 신원 UNKNOWN. 이를 실제 사용자 소유 AirPods5 케이스로 단정 금지.
 - v137 브랜치 `airpods-137-readonly-identity-profile-20261016`, GitHub Actions `38897400504` SUCCESS, 릴리스 `my-airpods5-v137-identity-readonly-r8`. APK `My_AirPods5_v1.0.37_READONLY_IDENTITY_PROFILE_LAB.apk`, SHA256 `19734234c523b58d8f75a6cfd7596793a9560ee76afbdcd187c1ceaec702b12f`, package `com.myairpods5.personal.identityprobe`, vCode 10037, v2 signer certificate `787d66a29fe20031f99cb9f873fea563b48832afa01085e63c22ad007f41b847`. 바이너리 ZIP/서명/source freeze PASS.
