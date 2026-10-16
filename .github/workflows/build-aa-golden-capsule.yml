@@ -5,7 +5,7 @@ on:
       source_ref:
         description: 'Approved private-source commit SHA (must match the pinned revision)'
         required: true
-        default: '33d3f173c6e91b2dc9f244152e1627fef748078b'
+        default: '7914b9b19430f080a80491048128672d9a4f8d96'
         type: string
 permissions:
   contents: read
@@ -13,7 +13,7 @@ concurrency:
   group: aa-golden-original-signer
   cancel-in-progress: false
 env:
-  AA_EXPECTED_SOURCE_SHA: '33d3f173c6e91b2dc9f244152e1627fef748078b'
+  AA_EXPECTED_SOURCE_SHA: '7914b9b19430f080a80491048128672d9a4f8d96'
   AA_ORIGINAL_SIGNING_SOURCE_SHA: '9ae4b5bf1472f28681f08c597ce50161d0176134'
   AA_EXPECTED_SIGNER_SHA256: 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23'
 jobs:
