@@ -1,8 +1,8 @@
-name: My AirPods5 v1.0.39 ONE LAB / no background scanner / replaces v138
+name: My AirPods5 v1.0.40 A3529 GATT trial source build
 on:
   push:
-    branches: [airpods-139-singlelab-replace-v138-20261016]
-    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**']
+    branches: [airpods-140-a3529-manual-fd44-sound-experiment-20261017]
+    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**', 'ci/case_protocol_v140/**']
   workflow_dispatch:
 permissions:
   contents: write
@@ -58,11 +58,12 @@ jobs:
           python3 ci/case_protocol_v137/patch_case_identity_v137.py input/app_source "$PWD"
           python3 ci/case_protocol_v138/patch_case_radio_v138.py input/app_source "$PWD"
           python3 ci/case_protocol_v139/patch_lab_single_scanner.py input/app_source "$PWD"
+          python3 ci/case_protocol_v140/patch_v140.py input/app_source "$PWD"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
           python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10039' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10040' input/app_source/android/app/build.gradle.kts
           test -s "$SRC/CaseIdentityReadV137.kt"
           test -s "$SRC/CaseRadioEvidenceV138.kt"
           grep -F 'CaseIdentityReadV137(g)' "$SRC/CasePathV134.kt"
@@ -82,7 +83,7 @@ jobs:
           echo 'V125_RETIRED_REFUTED_SCAN=PASS'
           echo 'V126_SINGLE_BLEMANAGER_EXEMPTION_WITH_EXACT_ANCHORS=PASS'
           echo 'V134_READ_ONLY_OWNED_CANDIDATE_GATT_UUID_DISCOVERY=PASS'
-          echo 'V134_A3530_PHYSICAL_CASE_SOUND=NOT_IMPLEMENTED_NOT_VERIFIED'
+          echo 'V140_A3529_FD44_NONOWNER_SOUND_TRIAL_COMPILED_NOT_PHYSICAL_PASS'
       - name: Install SDK and compile lab
         run: |
           set -euo pipefail
@@ -96,22 +97,24 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          APK=dist/My_AirPods5_v1.0.39_ONE_LAB_SINGLE_SCANNER_REPLACE_V138.apk
+          APK=dist/My_AirPods5_v1.0.40_A3529_FD44_NONOWNER_EXPLICIT_TEST.apk
           cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
           grep -F "name='com.myairpods5.personal.radiolab'" dist/PACKAGE.txt
           unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CasePathV134' >/dev/null
           echo 'V134_CASE_PATH_CLASS_IN_REAL_APK=PASS'
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseSoundTrialV140' >/dev/null
+          echo 'V140_REAL_GATT_EXPERIMENT_IN_COMPILED_DEX=PASS'
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/LICENSE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: MyAirPods5_v139_single_lab_replace_v138
+          name: MyAirPods5_v140_A3529_FD44_Trial
           path: dist/*
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "my-airpods5-v139-one-lab-replace-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.39 ONE active LAB, disables own automatic BLE scan, replaces v138' --notes 'SAME APP ID com.myairpods5.personal.radiolab as v138: Android debug certificates DIFFER, so direct update install not possible. DO NOT install on top. To replace, manually uninstall ONLY the 1.0.38 AirPods 신호 확인 LAB (this erases its local diagnostic/app keys if any), then install v1.0.39. This does not change number of apps. Do NOT remove personal baseline com.myairpods5.personal or older 1.0.34 LAB with possible IRK. Existing 1.0.36 and 1.0.37 clones can be force-stopped via Android App Info to avoid redundant scan. v139 turns OFF only its own cloned AirPodsService background BLE scan, leaving 1 on-demand scan, fixes v138 overlapping 12:02 other12 count, reports 12:19 non-connectable and ephemeral distinct address counts with no raw IDs. Has non-destructive LAB app role management screen. No GATT writes, no Find My case sound command, no pairing resets. Actual AirPods5 closed-case beep is NOT implemented or physically verified.' --prerelease
+          gh release create "my-airpods5-v140-a3529-fd44-manual-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.40 experimental A3529 FindMy nonowner sound GATT opt-in' --notes 'SAME APP ID com.myairpods5.personal.radiolab as v138: Android debug certificates DIFFER, so direct update install not possible. DO NOT install on top. To replace, manually uninstall ONLY the 1.0.38 AirPods 신호 확인 LAB (this erases its local diagnostic/app keys if any), then install v1.0.39. This does not change number of apps. Do NOT remove personal baseline com.myairpods5.personal or older 1.0.34 LAB with possible IRK. Existing 1.0.36 and 1.0.37 clones can be force-stopped via Android App Info to avoid redundant scan. v139 turns OFF only its own cloned AirPodsService background BLE scan, leaving 1 on-demand scan, fixes v138 overlapping 12:02 other12 count, reports 12:19 non-connectable and ephemeral distinct address counts with no raw IDs. Has non-destructive LAB app role management screen. Manual opted-in FD44 NONOWNER sound START trial on explicitly selected connectable candidate only (may NOT be own A3529). No pairing resets. Physical closed-case beep NOT VERIFIED, no Apple owner authentication. Debug signature rotating: existing v139 radiolab cannot directly update. Uninstall ONLY radiolab if willing; NEVER delete original personal or v134 key store.' --prerelease
