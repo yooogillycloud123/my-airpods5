@@ -2,12 +2,14 @@ name: REA actual Find My protocol APK comparison (AirGuard OSS)
 on:
   workflow_dispatch:
   push:
-    branches: [main, feature/rea-real-findmy-comparative-audit-20261016]
+    branches: [main, feature/rea-real-findmy-comparative-audit-20261016, fix/case-model-proof-rea-20261017]
     paths:
       - 'tools/rea_airpods/compare_findmy_oss.py'
       - 'tools/rea_airpods/test_compare_findmy_oss.py'
       - 'tools/rea_airpods/airguard_sound_semantics.py'
       - 'tools/rea_airpods/test_airguard_sound_semantics.py'
+      - 'tools/rea_airpods/case_target_identity.py'
+      - 'tools/rea_airpods/test_case_target_identity.py'
       - '.github/workflows/rea-findmy-real-protocol-compare.yml'
 permissions:
   contents: read
@@ -32,6 +34,14 @@ jobs:
           java-version: '21'
       - name: Unit tests without devices
         run: python3 -m unittest discover -s tools/rea_airpods -p 'test_compare_findmy_oss.py' -v
+      - name: Fail-closed device model verification vs conflicting Apple official sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools/rea_airpods python3 -m unittest discover -s tools/rea_airpods -p 'test_case_target_identity.py' -v
+          python3 tools/rea_airpods/case_target_identity.py --out "dist/REA_AirPods5_CASE_MODEL_IDENTITY_GATE.json"
+          python3 -m json.tool dist/REA_AirPods5_CASE_MODEL_IDENTITY_GATE.json > /dev/null
+          cat dist/REA_AirPods5_CASE_MODEL_IDENTITY_GATE.json
       - name: Install official pinned REA 6.5.0
         run: |
           set -euo pipefail
@@ -89,4 +99,5 @@ jobs:
           path: |
             dist/REA_AirGuard_FindMy_CASE_OWNERSHIP_STATUS.json
             dist/REA_AirGuard_3.1.3_VERIFIED_SOUND_CONTRACT.json
+            dist/REA_AirPods5_CASE_MODEL_IDENTITY_GATE.json
           retention-days: 7
