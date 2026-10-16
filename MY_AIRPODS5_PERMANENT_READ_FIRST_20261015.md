@@ -1,3 +1,12 @@
+## 2026-10-16 v141 REAL result: source-first case owner proof audit, 20 offline tests PASS, NO NEW APK
+- Retain user v139 physical results: BLE callbacks 307, Apple 29, 12:02 13 packets/five temporary addresses; 12:19=0, 07:19=0. v136 one-time FD44 non-owner point and eight services **not bound to A3530**.
+- v140 code failed to upload in prior session but exists as locally verified source; v141 source package extends it with **privacy-safe evidence manifest reviewer** and 6 new unit tests (14 old + 6 new = 20 PASS), output `release_allowed=false`, `case_find_my_beep_working=false`. Not an installed APK nor working closed-case ring. Actual existing v139 APK untouched, SHA256 `380a26787fc0217ee0068dc24653ffb04731279f5e505e78b0d24deb683ca055`.
+- Case speaker hardware and charger power-edge chime are REAL; OFF→LED dark→ON works **only if case stays on controlled charger**. This is not Find My remote playback away from charger. LibrePods #102 maintainer needs owner-authenticated independent case GATT; Apple Find guide advises Apple account iPhone/iPad pairing. Android-only A3530 owner provisioning plus authenticated case play/stop and audible proof still unavailable.
+- Source and test artifact exists in current conversation `AirPods5_A3530_PROOF_RESEARCH_v141_20261016.zip`; branch `airpods-v140-case-owner-proof-gate-source-only-20261016` has new research outcome doc `MY_AIRPODS5_V141_SOURCE_RESEARCH_OUTCOME_20261016.md` (NOT a merged source implementation). Do not claim remote code uploaded/CI passed: **20 tests were run LOCALLY**, not Actions.
+- Future new APK only after independent reproducible A3530-specific authenticated owner trace and actual closed-case beep, plus durable signer. No 6th LAB installation, repeating empty BLE scans, guessed GATT writes, Bluetooth reset or deletion of personal v1.0.10/v139/AA Golden.
+
+---
+
 ## 2026-10-16 v139 사용자 실기 새 증거: 스캐너/표시 PASS, 12:02=13·임시 주소5, 케이스 소리 여전히 미구현
 - 실제 v139 최종창: 전체 BLE=307, Apple=29, FindMy `12:02` 13회(세션 내 임시 주소 5), `12:19` 연결가능·불가 모두 0, `07:19` 0, 0x3020/3620 0, Nearby10 0, 기타 12형 0. `v139_MANUAL_SCAN_AND_UI_PHYSICAL_PASS`, **본인 케이스 신원/GATT owner 인증/스피커 소리 미구현**. 임시 주소 5개는 **실물 기기 5개를 뜻하지 않음**.
 - v138 중복 집계 오류 수정 실기 반영 확인. 자체 `AirPodsService` 상시 BLE 스캔 OFF 소스 게이트는 PASS이나 **다른 설치 앱의 BLE 스캐너가 모두 비활성인지 확인된 건 아님**. 12:19 과거 1개 후보의 정체 미확인. 12:02와 그 후보 연결 추정 금지.
