@@ -144,7 +144,7 @@ jobs:
           source=Path("../signer-original/.github/workflows/build-r2519-phonefix.yml").read_text()
           for key in ("AA_SIGN_STORE_PASS","AA_SIGN_KEY_ALIAS","AA_SIGN_KEY_PASS"):
               matches=re.findall(r"(?m)^\s*"+re.escape(key)+r":\s*(\S+)\s*$",source)
-              if len(matches)!=1 or not matches[0] or "${{" in matches[0]:
+              if len(matches)!=1 or not matches[0] or (chr(36)+chr(123)+chr(123)) in matches[0]:
                   raise SystemExit("PRIVATE_SIGNING_CONFIG_INVALID_"+key)
               print("export "+key+"="+shlex.quote(matches[0]))
           PY
