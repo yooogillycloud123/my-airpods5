@@ -46,13 +46,13 @@ jobs:
           python3 ci/case_protocol_v124/patch_lab_independent_case.py input/app_source "$PWD"
           python3 ci/case_protocol_v125/patch_lab_safe_battery.py input/app_source "$PWD"
           python3 ci/case_protocol_v126/patch_capod_model_battery.py input/app_source
-          python3 ci/case_protocol_v134/patch_v134.py input/app_source "$PWD"
           # Known BLEManager.kt is the ONLY intentional frozen-engine exception.
           # The exact source-bundle SHA and every other source remain protected.
           grep -v '/bluetooth/BLEManager.kt$' input/PRISTINE_ENGINE_SHA256.txt > input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt
           mv input/PRISTINE_ENGINE_EXCEPT_BLEMANAGER_SHA256.txt input/PRISTINE_ENGINE_SHA256.txt
           python3 ci/case_protocol_v126/test_model_battery_contract.py "$SRC/bluetooth/BLEManager.kt"
           python3 ci/case_protocol_v125/test_battery_presentation_gate.py "$SRC"
+          python3 ci/case_protocol_v134/patch_v134.py input/app_source "$PWD"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
           python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
