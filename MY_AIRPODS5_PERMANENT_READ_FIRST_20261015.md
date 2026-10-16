@@ -1,3 +1,12 @@
+## 2026-10-16 v139 실제 APK 완성: v138과 동일 앱 ID로 교체 / 설치 총개수 증가 금지
+- 사용자는 개인 원본 1개+LAB 4개를 지적하면서 더 이상 6번째 앱 설치를 요구하지 말라고 명시. v139을 **v138과 동일 패키지 `com.myairpods5.personal.radiolab`**로 제작. CI `38904151411` SUCCESS, 릴리스 `my-airpods5-v139-one-lab-replace-r11`; SHA256 `380a26787fc0217ee0068dc24653ffb04731279f5e505e78b0d24deb683ca055`, 51,490,701 bytes, cert `6d73e4b2c659d6b3e5f38d83fe4fc6eed9e268254841c3664b14c3363a03ba39`. CI+zip/v2 signer/independent extracted APK hash PASS, v139 실기 미확인.
+- 실험 LAB v139 **자체 AirPodsService 상시 BLE 스캔 OFF**(사용자 수동 12초 검색만 1개), 12:02/12:19/other12 중복 집계 수정, 12:19 비연결 신호와 임시 주소별 카운트 구분, 메인 설정 대화상자 `실험앱 관리`에서 기존 설치앱 역할과 Android 앱 정보 바로가기 표시. 백그라운드에서 다른 앱을 강제종료/삭제하지 않음.
+- 설치 중 **중요 서명 제약**: v138/v139 CI debug 서명이 달라 v139 덮어쓰기 불가. **v138 `AirPods 신호 확인 · LAB`(`com.myairpods5.personal.radiolab`)만 한 번 삭제** 후 v139 설치 = 앱 수 증가하지 않음; v138 자체 데이터는 지워지므로 주의. 개인 v1.0.10, v134 lab(키 존재 가능성), AA Golden/데몬/페어링 변경 금지. v136 caseprobe/v137 identityprobe는 Android 설정에서 **강제 종료만**하여 중복 BLE 스캔을 차단하고, 사용자가 원하면 실기 성공 뒤 각각 데이터 손실 주의해 제거 가능.
+- 다음 정규 업데이트 이전에 안정적인 **비공개 개인 LAB 서명키** 확보해야 하며, 이번 v139을 연속 update-install 성공이라고 주장 금지. 본인 닫힌 AirPods5 케이스 소리 인증/FindMy 삐삐 미구현.
+- 상세 ROLE/절차/실측: `MY_AIRPODS5_V139_ONE_ACTIVE_LAB_REPLACEMENT_CHECKPOINT_20261016.md` (main).
+
+---
+
 ## 2026-10-16 v138 사용자 최신 실측: BLE335/Apple34, 12:02=11, 12:19=0, 07:19=0
 - 실제 사용자 캡처: BLE 콜백 335, Apple 제조사 콜백 34; **FindMy 12:02=11**, **Apple Nearby10형=22**, **12:19 연결가능=0**, **AirPods 07:19=0**, 모델 3020/3620=0. 전체 스캐너 작동 중이며 특정 광고형식만 미수신. 12:02와 과거 12:19가 동일 개체인지 RPA/키로 결속되지 않아 단정 금지.
 - v138 보고 문자열 **`다른 Find My 12형=11`은 소스 `generic12++`가 12:02까지 포함하여 중복 집계한 레이블 버그**. Apple 광고 종류 11+22+기타1이며 11건 별도 12형이 아님.
