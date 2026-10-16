@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "upstream_repository": "https://github.com/morluto/rea",
+  "upstream_license": "MIT",
+  "npm_package": "rea-agents",
+  "pinned_npm_version": "6.5.0",
+  "release_tag": "rea-agents-6.5.0",
+  "release_commit_sha": "3b79af28e80785afce9f5998d8f03289402a1847",
+  "android_engine": "jadx-headless-mcp",
+  "android_engine_version": "0.7.1",
+  "android_engine_sha256": "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+  "android_engine_url": "https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar",
+  "source_reference": "https://github.com/morluto/rea/blob/main/docs/android-analysis.md",
+  "owned_apk_tag": "my-airpods5-v139-one-lab-replace-r11",
+  "owned_apk_sha256": "380a26787fc0217ee0068dc24653ffb04731279f5e505e78b0d24deb683ca055",
+  "note": "Reference/install REA using pinned upstream release. Do NOT copy entire upstream repo into this app or claim registered ChatGPT MCP."
+}
