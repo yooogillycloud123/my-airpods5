@@ -61,14 +61,17 @@ def analyze(apk:Path, digest:str, out:Path)->dict:
                 norm=reply.get("normalized_result")
                 if not isinstance(norm,dict):
                     norm=reply.get("result",{})
-                source=norm.get("source") if isinstance(norm,dict) else None
+                source_evidence=norm.get("source") if isinstance(norm,dict) else None
+                source=source_evidence.get("text") if isinstance(source_evidence,dict) else None
                 status=norm.get("body_status") if isinstance(norm,dict) else None
+                coverage=source_evidence.get("status") if isinstance(source_evidence,dict) else "unknown"
                 # Safe diagnostics: field names and lengths ONLY, never decompiled code.
                 method_response_shapes[method]={
                     "top_level_keys":sorted(reply.keys())[:15],
                     "result_keys":sorted(norm.keys())[:18] if isinstance(norm,dict) else [],
                     "body_status":str(status)[:35],
                     "code_length":len(source) if isinstance(source,str) else 0,
+                    "coverage":str(coverage)[:32],
                 }
                 method_results[method]=(
                     "DECOMPILED_BODY_OBSERVED"
