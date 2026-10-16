@@ -6,6 +6,7 @@ on:
       - 'ci/aa_capsule_signed_apk_gate.py'
       - 'ci/test_aa_capsule_signed_apk_gate.py'
       - '.github/workflows/aa-capsule-release-gates.yml'
+      - '.github/workflows/build-aa-golden-capsule.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +28,32 @@ jobs:
           grep -Fq 'com.aaairpods.r25fix' ci/aa_capsule_signed_apk_gate.py
           grep -Fq 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23' ci/aa_capsule_signed_apk_gate.py
           grep -Fq '49364923ba83acaa02d4e6a2b58251df7697182ff82a4b33ae22abbc94764623' ci/aa_capsule_signed_apk_gate.py
+      - name: Assert FREE AA build requires just one private-read token
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          w=Path(".github/workflows/build-aa-golden-capsule.yml").read_text()
+          assert "AA_EXPECTED_SOURCE_SHA: '33d3f173c6e91b2dc9f244152e1627fef748078b'" in w
+          assert "AA_ORIGINAL_SIGNING_SOURCE_SHA: '9ae4b5bf1472f28681f08c597ce50161d0176134'" in w
+          assert "secrets.AA_PRIVATE_SOURCE_PAT" in w
+          assert "secrets.AA_SIGN_" not in w
+          assert "repository: yooogillycloud123/aa-airpods-golden-capsule" in w
+          assert "repository: yooogillycloud123/workexcel-devbridge" in w
+          assert "signer-original/.github/signing/aa-airpods-stable.jks.b64" in w
+          assert "git -C signer-original hash-object" in w
+          assert "keytool -exportcert" in w
+          assert "persist-credentials: false" in w
+          assert "trap 'rm -f" in w
+          assert "github.ref == 'refs/heads/main'" in w
+          assert "\\n  push:\\n" not in w
+          assert "AA_EXPECTED_SIGNER_SHA256" in w
+          assert "AA_AirPods_v26080_ORIGINAL_SIGNED_READONLY_CANDIDATE_NOT_FINAL.apk" in w
+          print("AA_ONE_SECRET_PRIVATE_READ_BUILD_WORKFLOW=STATIC_PASS")
+          print("EXISTING_SIGNER_PRIVATE_ONLY=PASS")
+          print("SIGNED_V26080_APK=NOT_BUILT")
+          PY
       - name: Publish precise gate outcome (does not claim app compile)
         shell: bash
         run: |
