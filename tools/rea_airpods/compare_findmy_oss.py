@@ -51,6 +51,7 @@ def analyze(apk:Path, digest:str, out:Path)->dict:
         raw=json.dumps(result)
         names[token] = token in raw
     method_results={}
+    method_response_shapes={}
     if names.get("AppleFindMy"):
         for method in METHODS:
             try:
@@ -62,6 +63,13 @@ def analyze(apk:Path, digest:str, out:Path)->dict:
                     norm=reply.get("result",{})
                 source=norm.get("source") if isinstance(norm,dict) else None
                 status=norm.get("body_status") if isinstance(norm,dict) else None
+                # Safe diagnostics: field names and lengths ONLY, never decompiled code.
+                method_response_shapes[method]={
+                    "top_level_keys":sorted(reply.keys())[:15],
+                    "result_keys":sorted(norm.keys())[:18] if isinstance(norm,dict) else [],
+                    "body_status":str(status)[:35],
+                    "code_length":len(source) if isinstance(source,str) else 0,
+                }
                 method_results[method]=(
                     "DECOMPILED_BODY_OBSERVED"
                     if status=="available" and isinstance(source,str) and len(source.strip())>20
@@ -82,6 +90,7 @@ def analyze(apk:Path, digest:str, out:Path)->dict:
         "class_applefindmy_search":"FOUND" if names["AppleFindMy"] else "NOT_OBSERVED",
         "class_airpods_search":"FOUND" if names["AirPods"] else "NOT_OBSERVED",
         "methods":method_results,
+        "method_response_shapes":method_response_shapes,
         "user_ble_evidence":classify_case_proof(),
         "documented_nonowner_path":"AirGuard AppleFindMy sound protocols DULT, FD44 and AirTag; this is NOT Apple own-case owner auth.",
         "model_scope":MODEL,
