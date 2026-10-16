@@ -1,0 +1,82 @@
+name: REA Android AirPods offline source audit (owned APK only)
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/rea-source-first-apk-audit-20261016
+    paths:
+      - '.github/workflows/rea-airpods-apk-source-audit.yml'
+      - 'tools/rea_airpods/**'
+      - 'AGENTS.md'
+permissions:
+  contents: read
+jobs:
+  rea-source-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      REA_JADX_HEAP_MIB: '2048'
+      REA_JADX_ACTIVE_PROCESSOR_COUNT: '2'
+      REA_AUDIT_RELEASE_TAG: my-airpods5-v139-one-lab-replace-r11
+      REA_TARGET_SHA256: 380a26787fc0217ee0068dc24653ffb04731279f5e505e78b0d24deb683ca055
+      REA_JADX_JAR_SHA256: 6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Local source integration guard tests
+        run: python3 -m unittest discover -s tools/rea_airpods -p 'test_*.py' -v
+      - name: Install PINNED official REA CLI and confirm supported runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          ps -p $$
+          node --version
+          java --version
+          npm install --global rea-agents@6.5.0 --no-audit --no-fund
+          rea --version
+      - name: Supply REA-audited JADX provider (verify SHA256 before use)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rea-jadx"
+          curl --retry 3 --fail --location --silent --show-error \
+            https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar \
+            --output "$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar"
+          printf '%s  %s\n' "$REA_JADX_JAR_SHA256" "$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" | sha256sum -c -
+          echo "REA_JADX_MCP_JAR=$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" >> "$GITHUB_ENV"
+          java --list-modules | grep -F jdk.compiler
+      - name: Fetch only PREVIOUSLY PUBLIC OWNED v139 LAB APK and pin bytes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rea-target"
+          gh release download "$REA_AUDIT_RELEASE_TAG" \
+            --pattern "My_AirPods5_v1.0.39_ONE_LAB_SINGLE_SCANNER_REPLACE_V138.apk" \
+            --dir "$RUNNER_TEMP/rea-target" --clobber
+          APK="$RUNNER_TEMP/rea-target/My_AirPods5_v1.0.39_ONE_LAB_SINGLE_SCANNER_REPLACE_V138.apk"
+          printf '%s  %s\n' "$REA_TARGET_SHA256" "$APK" | sha256sum -c -
+          echo "REA_OWN_APK=$APK" >> "$GITHUB_ENV"
+      - name: Run real REA+JADX static APK analysis, retain raw only in runner temp
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/rea_airpods/run_owned_apk_audit.py \
+            --apk "$REA_OWN_APK" --expected-sha256 "$REA_TARGET_SHA256" \
+            --output "dist/rea_airpods_v139_SAFE_SUMMARY.json"
+          python3 -m json.tool dist/rea_airpods_v139_SAFE_SUMMARY.json > /dev/null
+          cat dist/rea_airpods_v139_SAFE_SUMMARY.json
+      - name: Upload only sanitized classification (NO raw DEX, MAC or keys)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rea_airpods_v139_static_evidence_summary
+          path: dist/rea_airpods_v139_SAFE_SUMMARY.json
+          retention-days: 7
