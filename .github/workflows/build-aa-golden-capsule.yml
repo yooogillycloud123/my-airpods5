@@ -96,6 +96,26 @@ jobs:
             exit 45
           fi
           echo "Golden focus host regression passed."
+      - name: Independent OneApp2 native role matrix JDK17 regression
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
+          TDIR="$RUNNER_TEMP/oneapp2_host"
+          mkdir -p "$TDIR/src/com/aaairpods/bridge" "$TDIR/classes"
+          # Match exact independent flavor APP_ID from the untouched real source;
+          # use a test-only identity stub to keep the audit free of Android deps.
+          grep -Fq 'APP_ID="com.aaairpods.oneapp.lab"' "$SRC/OneApp2Identity.java"
+          printf 'package com.aaairpods.bridge; public final class OneApp2Identity { public static final String APP_ID="com.aaairpods.oneapp.lab"; }\n' > "$TDIR/src/com/aaairpods/bridge/OneApp2Identity.java"
+          if ! {
+            javac --release 17 -d "$TDIR/classes" "$TDIR/src/com/aaairpods/bridge/OneApp2Identity.java" "$SRC/OneApp2IntegrationMatrix.java" qa/oneapp-controller/OneApp2IntegrationMatrixTest.java
+            java -cp "$TDIR/classes" com.aaairpods.bridge.OneApp2IntegrationMatrixTest
+          } > "$RUNNER_TEMP/aa-private-oneapp2-role-tests.log" 2>&1; then
+            echo "::error title=ONEAPP2_ROLE_MATRIX_FAILED::Independent host parity checks failed; no Golden audio action attempted."
+            exit 56
+          fi
+          echo "ONEAPP2_STANDALONE_ROLE_MATRIX_HOST=PASS"
       - name: Install Android 36 SDK, NDK 27, CMake 3.22 and compile-only stubs
         working-directory: golden-src
         shell: bash
