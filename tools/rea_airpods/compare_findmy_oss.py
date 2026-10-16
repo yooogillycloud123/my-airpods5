@@ -17,7 +17,7 @@ TARGET_RELEASE = "3.1.3"
 CLASS = "de.seemoo.at_tracking_detection.database.models.device.types.AppleFindMy"
 CLASS_PODS = "de.seemoo.at_tracking_detection.database.models.device.types.AirPods"
 METHODS = ("tryStartProtocol", "stopSound", "writeCharacteristicRaw")
-MODEL = "AirPods 5 A3530 wireless case, not earbud"
+MODEL = "AirPods 5 wireless charging case (physical A-model NOT verified; A3529/A3530 sources conflict)"
 
 def classify_case_proof() -> dict:
     # Session evidence is the user's actual v139 screenshot, not inference.
@@ -118,5 +118,5 @@ def main():
     print("REA_FINDMY_COMPARATIVE_STATIC_AUDIT=PASS")
     print("APK_SHA256="+r["apk_sha256"])
     print("APK_DEX_COUNT="+str(r["dex_files"]))
-    print("OWN_A3530_CASE_BEEP=NOT_PROVEN")
+    print("OWN_WIRELESS_CASE_BEEP=NOT_PROVEN")
 if __name__=="__main__":main()

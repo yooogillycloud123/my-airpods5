@@ -22,7 +22,7 @@ class SourceContractTests(unittest.TestCase):
     def test_upstream_public_contract_with_proof_limits(self):
         facts=inspect_sources(PODS,FINDMY)
         self.assertEqual(facts["fd44_nonowner_characteristic"],"4F860003")
-        self.assertFalse(facts["fd44_user_a3530_case_auth_proven"])
+        self.assertFalse(facts["fd44_user_wireless_case_auth_proven"])
         self.assertFalse(facts["fd44_case_sound_observed_by_user"])
         self.assertFalse(facts["gatt_write_ack_implies_physical_case_sound"])
         self.assertTrue(all(facts["checked_contracts"].values()))

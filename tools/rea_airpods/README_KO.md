@@ -1,3 +1,5 @@
+
+> 2026-10-17 핵심 정정: Apple 공식 한국 제품 사양은 무선 케이스를 A3529로, Apple 한국 지원 검색 문서는 A3530으로 표기하는 불일치가 보입니다. 사용자 실물 하우징 모델 인증이 없으므로 A3530으로 단정하지 않습니다. 자동 검증 `case_target_identity.py` 참고.
 # AirPods 5 프로젝트 × Reverse Engineer Anything (REA)
 
 **현재 상태: REA + JADX 실제 GitHub Actions 실행 SUCCESS.** Android 원본 v139 LAB APK를 대상으로 공식 upstream의 REA CLI를 실행하고 DEX 14개 및 실제 클래스 검색까지 확인했습니다. 케이스 소리 재생은 **아직 미구현**입니다.
@@ -27,7 +29,7 @@ GitHub 프로젝트를 읽고 수정할 수 있는 ChatGPT GitHub 연결로 `.gi
 - 개인 부분 검증 v1.0.10, Android Auto Golden 및 v139 설치 앱 모두 무변경.
 - 테스트 반복, Android 강제 재페어링, 사용자 설치 앱 삭제 없음.
 - 비공개 타사 APK·앱 계정 정보·Bluetooth 키·IRK·MAC·기기 시리얼·원본 디컴파일 전문을 공용 GitHub Actions artifact/log에 보관하지 않음.
-- `12:02` 근접 신호, `12:19` 비소유자 FD44, `0x3020` 이어버드 모델, 충전 시작 딩 소리 ≠ A3530 케이스 소유자 인증/Find My 명령.
+- `12:02` 근접 신호, `12:19` 비소유자 FD44, `0x3020` 이어버드 모델, 충전 시작 딩 소리 ≠ 사용자 실물 케이스 모델(A3529/A3530 자료 상충, 미확인) 소유자 인증/Find My 명령.
 - 실제 케이스 소리 APK는 모델별 케이스 신원, 인증된 GATT 세션, 실제 재생 명령, 물리적 소리 확인 전 출시하지 않음.
 
 ## 다음 연구 단계
