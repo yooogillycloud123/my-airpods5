@@ -1,5 +1,8 @@
 name: AA Golden Capsule - FREE PUBLIC Runner (private source)
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/build-aa-golden-capsule.yml']
   workflow_dispatch:
     inputs:
       source_ref:
