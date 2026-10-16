@@ -40,7 +40,7 @@ class TestFindMyCompare(unittest.TestCase):
             if args[1]=="search-android-classes":
                 return {"normalized_result":{"matches":[{"class_name":args[3]}]}}
             if args[1]=="inspect-android-method":
-                return {"normalized_result":{"method_name":args[4]}}
+                return {"normalized_result":{"body_status":"available","source":"this is decompiled source text with enough bytes and a method body"}}
             raise AssertionError(args)
         out=Path(self.temp.name)/"safe.json"
         with patch("compare_findmy_oss.cli_json",side_effect=mocked_cli):
@@ -48,7 +48,7 @@ class TestFindMyCompare(unittest.TestCase):
         self.assertEqual(result["rea_jadx_package_inspection"],"PASS")
         self.assertEqual(len(calls),1+2+len(METHODS))
         self.assertTrue(all(x[-1]=="--json" for x in calls))
-        self.assertTrue(all(x=="CODE_OBSERVED" for x in result["methods"].values()))
+        self.assertTrue(all(x=="DECOMPILED_BODY_OBSERVED" for x in result["methods"].values()))
         self.assertFalse(result["claim_user_closed_a3530_beep"])
         self.assertFalse(result["raw_decompilation_released"])
         self.assertNotIn("normalized_result",out.read_text())
