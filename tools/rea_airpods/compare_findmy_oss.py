@@ -55,8 +55,18 @@ def analyze(apk:Path, digest:str, out:Path)->dict:
         for method in METHODS:
             try:
                 reply=cli_json(["rea","inspect-android-method",str(apk),CLASS,method,"--json"],timeout=520)
-                raw=json.dumps(reply)
-                method_results[method]="CODE_OBSERVED" if method in raw else "METHOD_OUTPUT_UNKNOWN"
+                # REA's Android contract: normalized_result.body_status/source;
+                # Echoed REQUEST method names are not proof of decompiled bytes.
+                norm=reply.get("normalized_result")
+                if not isinstance(norm,dict):
+                    norm=reply.get("result",{})
+                source=norm.get("source") if isinstance(norm,dict) else None
+                status=norm.get("body_status") if isinstance(norm,dict) else None
+                method_results[method]=(
+                    "DECOMPILED_BODY_OBSERVED"
+                    if status=="available" and isinstance(source,str) and len(source.strip())>20
+                    else "NO_VERIFIED_DECOMPILED_BODY"
+                )
             except (RuntimeError,TimeoutError) as exc:
                 method_results[method]="NOT_VERIFIABLE_WITH_THIS_APK"
     else:
