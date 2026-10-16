@@ -1,3 +1,12 @@
+## 2026-10-16 v1.0.36 후보 선택 오류 수정 · 기존 LAB 삭제 없는 병행 설치
+- 사용자 실제 v1.0.34 화면: 12:19 후보 1개인데 선택 행이 없고 취소만 표시됨. Android `AlertDialog.Builder`에서 `.setMessage`와 `.setItems` 병용하여 목록이 숨겨지는 소스 결함 직접 확인.
+- v1.0.35는 후보 행 선택 UI 수정 및 CI PASS였지만 기존 v1.0.34와 디버그 서명이 달라 정상 update-install 불가.
+- **v1.0.36 안전 실험판**: `airpods-136-parallel-picker-preserve-lab-20261016`, Actions `38893990652` SUCCESS, release `my-airpods5-v136-parallel-picker-r4`, SHA256 `1f45f7a05d6e65448b45f99e78890298efc95d8a295b089550367256e52fa9a3`. 새로운 독립 package `com.myairpods5.personal.caseprobe`으로 배포해 기존 `.lab` v1.0.34의 저장소를 삭제/교체하지 않고 나란히 설치 가능. 개인 `com.myairpods5.personal` v1.0.10 일부 기능 검증 기준선, AA Golden은 변경 없음.
+- 후보 탭 → 별도 사용자 확인 → **읽기 전용 GATT FD44/DULT 서비스 유무** 확인까지만 구현. `FD44=true`라도 본인 A3530 케이스/소유자 인증/실제 찾기 삐삐 성공은 입증되지 않음. 타인 소유 미확인 기기 GATT 연결 금지. 실제 사운드 기능 **미구현**.
+- 최신 상세: `MY_AIRPODS5_V136_NON_DESTRUCTIVE_CANDIDATE_PICKER_HANDOFF_20261016.md` (main). 앞으로 기존 LAB 삭제 유도 금지; 영구 서명키 마련 전 매번 다른 서명으로 업데이트를 가정하지 않는다.
+
+---
+
 # 내 에어팟 5 · 영구 인수인계 / READ FIRST (2026-10-15)
 
 ## 2026-10-15 v1.0.24 실제 설치형 LAB APK 완성(빌드만 PASS) — 케이스 소리 미구현
