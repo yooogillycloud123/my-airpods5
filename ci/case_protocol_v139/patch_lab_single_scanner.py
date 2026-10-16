@@ -86,18 +86,18 @@ once(radio,'''nearInfo10, generic12, candidates.values.toList())''',
                 nearbyUniqueAddresses.size, separatedUniqueAddresses.size,
                 nearbyUniqueAddresses.count { separatedUniqueAddresses.contains(it) },
                 candidates.values.toList())''')
-once(radio,'''report.append("Find My 주변형 12:02=").append(s.findmy02).append('\n')
-            report.append("Find My 분리형 12:19 연결가능=").append(s.findmy19).append('\n')
-            report.append("분리형 서로 다른 후보=").append(s.candidates.size).append('\n')
-            report.append("다른 Find My 12형=").append(s.generic12).append('\n')''',
-'''report.append("Find My 주변형 12:02=").append(s.findmy02).append('\n')
-            report.append("  ↳ 서로 다른 주소(임시)=").append(s.nearbyUnique).append('\n')
-            report.append("Find My 분리형 12:19 연결가능=").append(s.findmy19).append('\n')
-            report.append("Find My 12:19 연결불가=").append(s.findmy19Nonconnectable).append('\n')
-            report.append("  ↳ 분리형 서로 다른 주소=").append(s.separatedUnique).append('\n')
-            report.append("  ↳ 동일 주소의 12:02·12:19 관찰=").append(s.sameAddressTwoModes).append('\n')
-            report.append("연결 가능 후보=").append(s.candidates.size).append('\n')
-            report.append("그 외 12형(중복 제외)=").append(s.generic12).append('\n')''')
+once(radio,'''report.append("Find My 주변형 12:02=").append(s.findmy02).append('\\n')
+            report.append("Find My 분리형 12:19 연결가능=").append(s.findmy19).append('\\n')
+            report.append("분리형 서로 다른 후보=").append(s.candidates.size).append('\\n')
+            report.append("다른 Find My 12형=").append(s.generic12).append('\\n')''',
+'''report.append("Find My 주변형 12:02=").append(s.findmy02).append('\\n')
+            report.append("  ↳ 서로 다른 주소(임시)=").append(s.nearbyUnique).append('\\n')
+            report.append("Find My 분리형 12:19 연결가능=").append(s.findmy19).append('\\n')
+            report.append("Find My 12:19 연결불가=").append(s.findmy19Nonconnectable).append('\\n')
+            report.append("  ↳ 분리형 서로 다른 주소=").append(s.separatedUnique).append('\\n')
+            report.append("  ↳ 동일 주소의 12:02·12:19 관찰=").append(s.sameAddressTwoModes).append('\\n')
+            report.append("연결 가능 후보=").append(s.candidates.size).append('\\n')
+            report.append("그 외 12형(중복 제외)=").append(s.generic12).append('\\n')''')
 once(radio,"\"다른 사람 기기에 연결하거나 소리 명령을 보내지 않습니다. 자동 재검색도 없습니다.\"",
      '''"다른 사람 기기에 연결하거나 소리 명령을 보내지 않습니다. " +
                 "실험용 앱의 백그라운드 BLE 검색을 끈 상태에서 한 번만 확인합니다."''')
