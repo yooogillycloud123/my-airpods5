@@ -63,10 +63,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Gradle 9.4.0
+      - name: Gradle 9.6.0 required by Android Gradle Plugin 9.4
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
         with:
-          gradle-version: '9.4.0'
+          gradle-version: '9.6.0'
           cache-disabled: true
       - name: Protect imported Golden exact blobs, owner constraints
         working-directory: golden-src
