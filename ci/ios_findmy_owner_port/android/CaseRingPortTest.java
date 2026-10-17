@@ -48,7 +48,7 @@ public final class CaseRingPortTest {
         check(r.requestOneBoundedRing()==CaseRingPort.Code.CASE_AUDIBLE_NOT_VALIDATED);
         m.stop=true; m.start=false; m.stopCalls=0;
         check(r.requestOneBoundedRing()==CaseRingPort.Code.CASE_AUDIBLE_NOT_VALIDATED);
-        check(m.stopCalls==0); // do not issue stop on never-started target
+        check(m.stopCalls==1); // START may have reached device before failure; always STOP
         final int[] stages={0};
         CaseRingPort denied=CaseRingPort.createUnprovisioned(s -> stages[0]++);
         check(denied.requestOneBoundedRing()==CaseRingPort.Code.OWN_CASE_UNIDENTIFIED);
