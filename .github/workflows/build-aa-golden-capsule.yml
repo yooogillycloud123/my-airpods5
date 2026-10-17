@@ -272,3 +272,147 @@ jobs:
         run: |
           set -euo pipefail
           rm -f -- "$RUNNER_TEMP/aa-r25-original.jks" "$RUNNER_TEMP/aa-private-source-checks.log" "$RUNNER_TEMP/aa-private-focus-tests.log" "$RUNNER_TEMP/aa-private-compile.log" "$RUNNER_TEMP/aa-private-keytool.log" "$RUNNER_TEMP/aa-private-signed-build.log" "$RUNNER_TEMP/aa-private-apk-check.log" "$RUNNER_TEMP/aa-private-lab-compile.log" "$RUNNER_TEMP/aa-private-lab-zip-check.log" "$RUNNER_TEMP/aa-private-lab-sign-check.log" "$RUNNER_TEMP/aa-private-lab-badging.log" "$RUNNER_TEMP/aa-private-lab-manifest.log" "$RUNNER_TEMP/aa-private-lab-integrity.log"
+  lab-diagnostic-test-only:
+    name: Independent OneApp2 Lab / signed diagnostic, NOT RELEASE
+    if: github.repository == 'yooogillycloud123/my-airpods5' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Read only pinned complete PRIVATE source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: yooogillycloud123/aa-airpods-golden-capsule
+          ref: ${{ env.AA_EXPECTED_SOURCE_SHA }}
+          token: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
+          persist-credentials: false
+          path: golden-src
+      - name: Read original PRIVATE signing key and identity, never output them
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: yooogillycloud123/workexcel-devbridge
+          ref: ${{ env.AA_ORIGINAL_SIGNING_SOURCE_SHA }}
+          token: ${{ secrets.AA_PRIVATE_SOURCE_PAT }}
+          persist-credentials: false
+          path: signer-original
+          sparse-checkout: |
+            .github/signing
+            .github/workflows/build-r2519-phonefix.yml
+          sparse-checkout-cone-mode: false
+      - name: Set up JDK17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle9.6
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+        with:
+          gradle-version: '9.6.0'
+          cache-disabled: true
+      - name: Verify pinned head, immutable Golden, and independent LAB identity
+        shell: bash
+        working-directory: golden-src
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$AA_EXPECTED_SOURCE_SHA"
+          python3 qa/golden_capsule_migration_freeze.py
+          python3 qa/oneapp-controller/verify_embedded_golden_b.py
+          python3 qa/oneapp-controller/verify_golden_capsule_readonly.py
+          python3 qa/oneapp-controller/verify_oneapp2_internal_direct_parity.py
+          grep -Fq 'APP_ID="com.aaairpods.oneapp.lab"' aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge/OneApp2Identity.java
+          echo 'GOLDEN_IMMUTABLE=PASS;SOURCE_PIN=PASS;LAB_IDENTITY=PASS'
+      - name: Record expected production parity blocker without claiming release PASS
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          if python3 qa/oneapp-controller/verify_golden_b_493_full_runtime_parity.py > "$RUNNER_TEMP/parity.txt" 2>&1; then
+            echo 'GOLDEN_RELEASE_PARITY_STATIC=PASS' 
+          else
+            rc=$?
+            if [ "$rc" -ne 61 ]; then echo 'PARITY_CHECK_UNEXPECTED_ERROR'; exit 61; fi
+            echo 'GOLDEN_RELEASE_PARITY=FAIL_EXPECTED_EXIT_61;DIAGNOSTIC_LAB_NOT_FINAL'
+          fi
+          rm -f "$RUNNER_TEMP/parity.txt"
+      - name: Replay read-only HU/PCM 8s classifier on original success and negative cases
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
+          mkdir -p "$RUNNER_TEMP/hu_host"
+          javac --release 17 -d "$RUNNER_TEMP/hu_host" "$SRC/OneApp2MediaOwnerSnapshot.java" "$SRC/OneApp2HuPcmEvidence.java" qa/oneapp-controller/OneApp2HuPcmEvidenceTest.java
+          java -cp "$RUNNER_TEMP/hu_host" com.aaairpods.bridge.OneApp2HuPcmEvidenceTest
+      - name: Provision Android 36 / build tools / NDK / hidden API compile stubs
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools' 'cmake;3.22.1' 'ndk;27.0.12077973'
+          mkdir -p "$RUNNER_TEMP/classes"
+          javac --release 17 -cp "$ANDROID_HOME/platforms/android-36/android.jar" -d "$RUNNER_TEMP/classes" r25-hidden-stubs/android/media/AudioFocusInfo.java r25-hidden-stubs/android/media/audiopolicy/AudioPolicy.java
+          jar cf aa-airpods-bridge-v01/r25-hidden-api-stubs.jar -C "$RUNNER_TEMP/classes" .
+      - name: Compile independent OneApp2 LAB latest full Android source
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p aa-airpods-bridge-v01 :app:compileLabDebugJavaWithJavac --no-daemon --stacktrace
+      - name: Sign ONLY independent LAB with the original existing R25 signing identity
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$(git -C ../signer-original rev-parse HEAD)" = "$AA_ORIGINAL_SIGNING_SOURCE_SHA"
+          test "$(git -C ../signer-original hash-object .github/signing/aa-airpods-stable.jks.b64)" = 32affbb045da36a6eb4856f28fee8bda0c76aca2
+          export AA_SIGN_STORE="$RUNNER_TEMP/aa-oneapp2-lab.jks"
+          export AA_SIGN_KEY_ALIAS=aaairpods
+          base64 -d ../signer-original/.github/signing/aa-airpods-stable.jks.b64 > "$AA_SIGN_STORE"
+          chmod 600 "$AA_SIGN_STORE"
+          python3 - <<'PY' > "$RUNNER_TEMP/aa-lab-signing-env.sh"
+          from pathlib import Path
+          import re, shlex
+          source=Path('../signer-original/.github/workflows/build-r2519-phonefix.yml').read_text()
+          for key in ('AA_SIGN_STORE_PASS','AA_SIGN_KEY_ALIAS','AA_SIGN_KEY_PASS'):
+              matches=re.findall(r'(?m)^\s*'+re.escape(key)+r':\s*(\S+)\s*$', source)
+              if len(matches)!=1 or not matches[0] or (chr(36)+chr(123)+chr(123)) in matches[0]:
+                  raise SystemExit('PRIVATE_SIGNING_CONFIG_INVALID_'+key)
+              print('export '+key+'='+shlex.quote(matches[0]))
+          PY
+          chmod 600 "$RUNNER_TEMP/aa-lab-signing-env.sh"
+          source "$RUNNER_TEMP/aa-lab-signing-env.sh"
+          cert_sha="$(keytool -exportcert -keystore "$AA_SIGN_STORE" -alias "$AA_SIGN_KEY_ALIAS" -storepass:env AA_SIGN_STORE_PASS 2>/dev/null | sha256sum | cut -d' ' -f1)"
+          test "$cert_sha" = "$AA_EXPECTED_SIGNER_SHA256"
+          gradle -p aa-airpods-bridge-v01 :app:assembleLabDebug --no-daemon --stacktrace > "$RUNNER_TEMP/lab-build.log" 2>&1 || { echo 'LAB_ANDROID_SIGNED_BUILD_FAILED'; tail -n 30 "$RUNNER_TEMP/lab-build.log" | sed -E 's/(password|passphrase|token|key).*/[REDACTED]/Ig'; exit 48; }
+          LAB=aa-airpods-bridge-v01/app/build/outputs/apk/lab/debug/app-lab-debug.apk
+          test -s "$LAB"
+          unzip -t "$LAB" | tail -1 | grep -F 'No errors detected'
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$LAB" > "$RUNNER_TEMP/lab-cert.txt"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' "$RUNNER_TEMP/lab-cert.txt"
+          grep -Fqi "$AA_EXPECTED_SIGNER_SHA256" "$RUNNER_TEMP/lab-cert.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$LAB" > "$RUNNER_TEMP/lab-badging.txt"
+          grep -Fq "package: name='com.aaairpods.oneapp.lab'" "$RUNNER_TEMP/lab-badging.txt"
+          grep -Fq "versionCode='26080'" "$RUNNER_TEMP/lab-badging.txt"
+          python3 qa/golden_capsule_verify_apk.py "$LAB" > "$RUNNER_TEMP/lab-integrity.txt"
+          mkdir -p dist
+          cp "$LAB" dist/AA_OneApp2_gbr3_LATEST_SIGNED_INCAR_TEST_ONLY_NOT_FINAL.apk
+          sha256sum dist/*.apk > dist/SHA256SUMS.txt
+          printf 'SOURCE_SHA=%s\nPACKAGE=com.aaairpods.oneapp.lab\nBUILD=SIGNED_LAB_TEST_ONLY\nGOLDEN_RELEASE_PARITY=FAIL_EXIT_61\nEDGE_UID_PARITY=UNVERIFIED\nCAR_AUDIBLE=NOT_TESTED\nGOLDEN_47651=UNTOUCHED\n' "$AA_EXPECTED_SOURCE_SHA" > dist/BUILD_STATUS.txt
+          echo 'SIGNED_INDEPENDENT_LAB_TEST_ARTIFACT=PASS;RELEASE_NOT_AUTHORIZED'
+      - name: Publish signed independent LAB diagnostic artifact only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AA_ONEAPP2_GBR3_SIGNED_INCAR_LAB_TEST_ONLY_NOT_FINAL
+          path: |
+            golden-src/dist/AA_OneApp2_gbr3_LATEST_SIGNED_INCAR_TEST_ONLY_NOT_FINAL.apk
+            golden-src/dist/SHA256SUMS.txt
+            golden-src/dist/BUILD_STATUS.txt
+          retention-days: 7
+          if-no-files-found: error
+      - name: Delete temporary signer secrets and private logs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f -- "$RUNNER_TEMP/aa-oneapp2-lab.jks" "$RUNNER_TEMP/aa-lab-signing-env.sh" "$RUNNER_TEMP/lab-build.log" "$RUNNER_TEMP/lab-cert.txt" "$RUNNER_TEMP/lab-badging.txt" "$RUNNER_TEMP/lab-integrity.txt" "$RUNNER_TEMP/parity.txt"
