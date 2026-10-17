@@ -54,8 +54,13 @@ public final class OneApp2MediaOwnerSnapshot {
         String[] f=raw.trim().split("\\|",-1);
         if(f.length!=8)throw new IllegalArgumentException("owner tuple field count");
         if("none".equals(f[0])) {
+            // Match the exact absent-owner record emitted by the user's
+            // proven aa_r25_owner.sh. Never normalize contradictory fields
+            // into a seemingly valid "no media" event.
             if(!"none".equals(f[1]) || !"none".equals(f[2])
-                    || !"NONE".equals(f[5]) || !"0".equals(f[6]))
+                    || !"none".equals(f[3]) || !"none".equals(f[4])
+                    || !"NONE".equals(f[5]) || !"0".equals(f[6])
+                    || !"0".equals(f[7]))
                 throw new IllegalArgumentException("invalid absent-owner tuple");
             return new OneApp2MediaOwnerSnapshot("none",-1,-1,-1,-1,
                     Route.NONE,0,false,true);
