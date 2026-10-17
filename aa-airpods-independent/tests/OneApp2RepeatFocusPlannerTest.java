@@ -118,6 +118,27 @@ public final class OneApp2RepeatFocusPlannerTest {
            "vehicle proof without this app's Focus MUST NOT release another UID");
         eq(p.verifiedVehicleCycles(),3,"no false additional cycle");
 
+        OneApp2RepeatFocusPlanner lostBeforeDisconnect=new OneApp2RepeatFocusPlanner();
+        eq(lostBeforeDisconnect.airpodsRequested(1,ytm,ON,true,true,true),
+           OneApp2RepeatFocusPlanner.Action.PREARM_REQUIRED,
+           "physical disconnect prearm new cycle");
+        eq(lostBeforeDisconnect.focusObserved(1,ytm,true,ON,true,true,true),
+           OneApp2RepeatFocusPlanner.Action.FOCUS_CONFIRMED,
+           "Focus was physically confirmed earlier");
+        eq(lostBeforeDisconnect.focusObserved(1,ytm,false,ON,true,true,true),
+           OneApp2RepeatFocusPlanner.Action.REARM_REQUIRED,
+           "Focus dropped just before AirPods unplug");
+        eq(lostBeforeDisconnect.vehicleRequested(2,
+             OneApp2RepeatFocusPlanner.RestoreCause.PHYSICAL_DISCONNECT),
+           OneApp2RepeatFocusPlanner.Action.WAIT_VEHICLE_EVIDENCE,
+           "physical disconnect must still restore vehicle");
+        eq(lostBeforeDisconnect.vehicleEvidence(2,evidence(8,true,true,false)),
+           OneApp2RepeatFocusPlanner.Action.VEHICLE_CONFIRMED_NO_OWNED_FOCUS,
+           "never abandon lost Focus after actual vehicle proof");
+        eq(lostBeforeDisconnect.verifiedVehicleCycles(),0,
+           "Focus-unowned vehicle return cannot falsely claim Focus cycle");
+        System.out.println("PHYSICAL_DISCONNECT_AFTER_FOCUS_DROP=HOST_PASS");
+
         System.out.println("NO_UNOWNED_FOCUS_ABANDON=HOST_PASS");
         System.out.println("ONEAPP2_REPEAT_FOCUS_HOST_CHECKS="+checks);
         System.out.println("GENERIC_SECOND_CYCLE_PREARM_REARM=HOST_PASS");
