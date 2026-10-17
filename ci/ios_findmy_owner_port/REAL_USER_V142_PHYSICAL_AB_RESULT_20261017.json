@@ -1,0 +1,67 @@
+{
+  "schema": "a3529-physical-case-rf-ab-observation-v1",
+  "user_device": "Samsung Galaxy S26 Ultra",
+  "physical_product_box": "AirPods 5 with Wireless Charging Case A3529",
+  "source": "2026-10-17 user-provided screenshot v1.0.42 A3529 wireless RF A/B screen",
+  "near_window_seconds": 8,
+  "far_window_seconds": 8,
+  "observed_apple_address_family_candidates_near": 13,
+  "observed_apple_address_family_candidates_far": 5,
+  "displayed_ranked_12_02_candidates": [
+    {
+      "near_rssi_mean_dbm": -91,
+      "far_observation": "not_observed",
+      "far_rssi_mean_dbm": null
+    },
+    {
+      "near_rssi_mean_dbm": -90,
+      "far_observation": "not_observed",
+      "far_rssi_mean_dbm": null
+    },
+    {
+      "near_rssi_mean_dbm": -92,
+      "far_observation": "not_observed",
+      "far_rssi_mean_dbm": null
+    },
+    {
+      "near_rssi_mean_dbm": -95,
+      "far_observation": "not_observed",
+      "far_rssi_mean_dbm": null
+    },
+    {
+      "near_rssi_mean_dbm": -82,
+      "far_observation": "observed",
+      "far_rssi_mean_dbm": -87
+    },
+    {
+      "near_rssi_mean_dbm": -91,
+      "far_observation": "observed",
+      "far_rssi_mean_dbm": -88
+    }
+  ],
+  "private_rotating_mac_disclosed": false,
+  "does_disappearance_prove_same_individual_case": false,
+  "does_rssi_drop_prove_owner_case_identity": false,
+  "does_anonymous_gatt_success_prove_a3529_case_sound": false,
+  "case_audio_playback_in_v142": "NOT_IMPLEMENTED",
+  "prev_v140_anonymous_fd44_gatt_ack": "START_SUCCESS_0_STOP_SUCCESS_0",
+  "prev_v140_user_physical_case_audible": "NO",
+  "individual_a3529_radio_identity": "UNVERIFIED",
+  "apple_findmy_owner_enrollment": "UNVERIFIED",
+  "case_owner_control_auth": "UNVERIFIED",
+  "user_outcome": "INCONCLUSIVE_PASSIVE_RF_ONLY",
+  "scientific_limitations": [
+    "13 near and 5 far are counts of observed transient address-and-family combinations, not necessarily unique physical devices.",
+    "Four missing transient 12:02 addresses may disappear due to rotation, scan sparsity or changed radio propagation; that cannot prove the user moved those physical devices.",
+    "Only one displayed still-observed signal dropped 5 dB; another rose 3 dB. Neither is a cryptographic own-case match.",
+    "The user's originally photographed retail box A3529 confirms product model, not the source of these anonymous BLE frames.",
+    "Do not promote this screenshot into proof of own-case Find My identity, owner authentication or a playable case speaker."
+  ],
+  "official_apple_eligibility_research": {
+    "Apple Find My network registration requires iPhone/iPad pairing and Find My enabled (supported route)": "https://support.apple.com/ko-kr/102648",
+    "AirPods Find My network iPhone/iPad setup": "https://support.apple.com/ko-kr/guide/airpods/dev8e8b93d71/27/web/27",
+    "LibrePods charging case Find My owner protocol is unresolved": "https://github.com/librepods-org/librepods/issues/102"
+  },
+  "decision": "STOP_GENERAL_BLE_RSSI_EXPERIMENTS_AND_UNIDENTIFIED_FD44_WRITES; FOCUS_ON_OWNER_ENROLLMENT_PROTOCOL_OR_REPORT_IMPOSSIBILITY",
+  "no_new_apk_needed": true
+}
