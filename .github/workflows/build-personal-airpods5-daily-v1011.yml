@@ -1,0 +1,111 @@
+name: Juhyeon AirPods 5 - Korean Daily Driver Candidate v1.0.11
+on:
+  workflow_dispatch:
+  push:
+    branches: [personal-airpods5-ko-daily-v1011-20261017]
+    paths:
+      - ".github/workflows/build-personal-airpods5-daily-v1011.yml"
+      - "ci/personalize_daily_v111.py"
+      - "My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip"
+      - "ci/repair_personal_core_v104.py"
+      - "ci/repair_personal_core_v105.py"
+      - "ci/repair_personal_ui_v106.py"
+      - "ci/repair_personal_activity_v107.py"
+      - "ci/repair_personal_oneear_v108.py"
+      - "ci/add_personal_diagnostics_v109.py"
+      - "ci/fix_evidenced_videoview_badtoken_v110.py"
+      - "ci/Capture-MyAirPods5-SystemCrash.ps1"
+permissions:
+  contents: write
+jobs:
+  source-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify original source archive, exact checksum and GPL license
+        run: |
+          set -euo pipefail
+          FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+          echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+          unzip -t "$FILE" | tail -1
+          unzip -q "$FILE" -d input
+          test -s input/app_source/LICENSE
+          grep -F 'applicationId = "com.myairpods5.personal"' input/app_source/android/app/build.gradle.kts
+      - name: Restore verified original AACP engine; patch real VideoView BadToken crash
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          # Application installs the forensics exception handler; its SHA is intentionally changed.
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py
+          python3 ci/personalize_daily_v111.py input/app_source input/app_source
+          python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py ci/personalize_daily_v111.py
+          test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          grep -F 'versionCode = 10011' input/app_source/android/app/build.gradle.kts
+          ! grep -F 'android.resource://me.kavishdevar.librepods' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          echo 'REAL_BADTOKEN_VIDEO_URI_AND_HANDLER=PASS'
+          ! grep -F 'AirPodsCrashDiary.show(this)' "$SRC/MainActivity.kt"
+          grep -F 'name = "내 에어팟 오류 기록 보기"' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'if (false) { // Korean personal build: no billing banner.' "$SRC/presentation/screens/AirPodsSettingsScreen.kt"
+          echo 'DAILY_KOREAN_NO_PAYWALL_MANUAL_DIAG=PASS'
+          echo "AUDITED_SINGLE_BIND_LIFECYCLE=PASS"
+          ! grep -F 'Last updated: 20 June 2026' "$SRC/presentation/screens/onboarding/PrivacyPolicyPage.kt"
+          echo "PRISTINE_BLUETOOTH_AACP_ATT_BLE_ALL_OTHER_SERVICES_BYTE_FOR_BYTE=PASS"
+          echo "AIRPODSSERVICE_EXACT_4_NULL_GUARDS_ONLY=PASS"
+      - name: Install supported Android 36 SDK / NDK 28
+        run: |
+          set -euo pipefail
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "sdk.dir=${ANDROID_HOME}" > input/app_source/android/local.properties
+      - name: Compile LibrePods-derived independent Korean APK from source
+        working-directory: input/app_source/android
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --stacktrace --console=plain --max-workers=2
+      - name: Verify APK and signer
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          SOURCE=input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk
+          test -s "$SOURCE"
+          APK=dist/Juhyeon_AirPods5_v1.0.11_KOREAN_DAILY_CANDIDATE.apk
+          cp "$SOURCE" "$APK"
+          unzip -t "$APK" | tail -1
+          # Verify the DEX, not merely source text, actually contains the crash recorder.
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF "AirPodsCrashDiary" >/dev/null
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF "airpods_last_fatal.txt" >/dev/null
+          echo "APK_DIAGNOSTIC_CRASH_RECORDER_IN_DEX=PASS"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal'" dist/PACKAGE.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
+          sha256sum "$APK" | tee dist/SHA256.txt
+          cp input/app_source/LICENSE dist/GPL_LICENSE.txt
+          echo "KOREAN DAILY v1.0.11 candidate. Based on physical PASS v1.0.10 core, same package, old app may have DIFFERENT CI debug signer: NEVER claim silent update or remove installed stable app. User real device ANC/battery regression required. No Find My charging case sound. No Android Auto routing changes." > dist/DEVICE_TEST_REQUIRED.txt
+          cp ci/Capture-MyAirPods5-SystemCrash.ps1 dist/
+          cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
+      - name: Publish APK as free prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="juhyeon-airpods5-ko-daily-v1011-r${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "주현에어팟5 1.0.11 한글 실사용 후보" --notes "v1.0.10 user-verified Bluetooth/AACP core preserved; no sound-find, paid upgrade, billing banner, developer support menu; crash report on demand, Korean daily UI. NOT device-verified yet. Existing v1.0.10 debug signer may differ; do not uninstall the user Golden just to test. GPL-3.0 source/attribution preserved. New debug signer is NOT in-place update compatible until verified." --prerelease
+          echo "Release: $TAG" >> "$GITHUB_STEP_SUMMARY"
