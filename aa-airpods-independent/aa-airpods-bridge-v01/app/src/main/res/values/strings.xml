@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_airpods_on_short">AirPods ON</string>
+    <string name="shortcut_airpods_on_long">AA AirPods 모드 켜기</string>
+    <string name="shortcut_restore_short">기본 출력</string>
+    <string name="shortcut_restore_long">AA AirPods 기본 출력 복원</string>
+    <string name="shortcut_auto_short">자동 모드</string>
+    <string name="shortcut_auto_long">AA AirPods 자동 모드 켜기</string>
+</resources>
