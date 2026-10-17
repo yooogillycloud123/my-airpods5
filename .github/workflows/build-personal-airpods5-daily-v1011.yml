@@ -50,8 +50,8 @@ jobs:
           python3 ci/repair_personal_activity_v107.py input/app_source
           python3 ci/repair_personal_oneear_v108.py input/app_source
           python3 ci/add_personal_diagnostics_v109.py input/app_source
-          python3 ci/fix_evidenced_videoview_badtoken_v110.py
-          python3 ci/personalize_daily_v111.py input/app_source input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          python3 ci/personalize_daily_v111.py input/app_source
           python3 -m py_compile ci/add_personal_diagnostics_v109.py ci/fix_evidenced_videoview_badtoken_v110.py ci/personalize_daily_v111.py
           test -s input/app_source/android/app/src/main/java/me/kavishdevar/librepods/AirPodsCrashDiary.kt
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
