@@ -1,3 +1,9 @@
+## 2026-10-17 FINAL bundled artifact (after PR5) and independent local Java smoke PASS
+- CI main run 38987471192 COMPLETED SUCCESS. Public GitHub Actions artifact ID 12083787192 includes sanitized REA_Apple_FindMy_26_Source_Port_PROOF.json and checked release zip AirPods5_REA_APPLE_FINDMY_ANDROID_PORT_SOURCE_20261017.zip. Independent container ZIP integrity PASS, SHA256 c082e49e92d35d1464b217c9d1bea856c2954d58dc39a7d7f4fb03766203654d.
+- The inner ZIP contains the actual Korean source report, audited pin/source validation Python, Android-compatible CaseRingPort.java, CaseRingPortTest.java, source-only optional Apple Mach-O Ghidra launcher and sanitized evidence JSON. Independent javac Java21 and java -ea smoke PASS, assertions=19, existing apps unchanged. No extra smartphone APK.
+- Source graph REA PASS but Apple real native binary REA/Ghidra decomp NOT performed; no case owner-session keys/command or actual audible A3529 beep. Other assertions do not prove real hardware outcome. Primary details PR #5 and ci/ios_findmy_owner_port/APPLE_FINDMY_TO_ANDROID_PORT_REPORT_KO.md.
+---
+
 ## 2026-10-17 VERIFIED REA APPLE FINDMY iOS SOURCE-FORENSICS + ANDROID OWNER-CASE PORT (PR #5)
 - User wants Apple Find My actually reversed and used on Galaxy S26 Ultra for AirPods 5 wireless A3529 case speaker with lid shut, neither buds connected nor Apple device/account. Apple product box physically A3529 confirmed.
 - Repo my-airpods5 PR #5 MERGED main commit 362fbfc1eba9693a2734ffd79e516af27005e881. Actions 38987215581 SUCCESS. Official REA 6.5.0 actually ran import-reference-source --detail summary on six GitHub-pinned Apple-related reverse sources (iOS 26/27 FindMy.app, SPOwner, searchpartyd symbol diffs plus three iOS 26.1 Objective-C pseudocode files), NOT actual Mach-O decomp. JDK21 compiled Android-compatible Java CaseRingPort with 19 assertions PASS.
