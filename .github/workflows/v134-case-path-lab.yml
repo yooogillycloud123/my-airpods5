@@ -1,8 +1,8 @@
-name: My AirPods5 v1.0.41 A3529 false-GATT-success correction
+name: My AirPods5 v1.0.42 A3529 physical near vs shielded identity check
 on:
   push:
-    branches: [airpods-v141-ble-audio-vs-control-proof-20261017]
-    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**', 'ci/case_protocol_v140/**']
+    branches: [airpods-v143-targeted-case-rf-correlation-20261017]
+    paths: ['.github/workflows/v134-case-path-lab.yml', 'ci/case_protocol_v134/**', 'ci/case_protocol_v135/**', 'ci/case_protocol_v136/**', 'ci/case_protocol_v137/**', 'ci/case_protocol_v138/**', 'ci/case_protocol_v139/**', 'ci/case_protocol_v140/**', 'ci/case_protocol_v143/**']
   workflow_dispatch:
 permissions:
   contents: write
@@ -59,11 +59,12 @@ jobs:
           python3 ci/case_protocol_v138/patch_case_radio_v138.py input/app_source "$PWD"
           python3 ci/case_protocol_v139/patch_lab_single_scanner.py input/app_source "$PWD"
           python3 ci/case_protocol_v140/patch_v140.py input/app_source "$PWD"
+          python3 ci/case_protocol_v143/patch_v142.py input/app_source "$PWD"
           python3 -m pip install --disable-pip-version-check 'cryptography==46.0.2'
           python3 ci/case_protocol_v123/test_case_session_evidence.py
           python3 ci/case_protocol_v123/test_case_broadcast_evidence.py
           sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
-          grep -F 'versionCode = 10041' input/app_source/android/app/build.gradle.kts
+          grep -F 'versionCode = 10042' input/app_source/android/app/build.gradle.kts
           test -s "$SRC/CaseIdentityReadV137.kt"
           test -s "$SRC/CaseRadioEvidenceV138.kt"
           grep -F 'CaseIdentityReadV137(g)' "$SRC/CasePathV134.kt"
@@ -71,7 +72,7 @@ jobs:
           grep -F 'requestPermissions(missing.toTypedArray(),121)' "$SRC/CaseOwnerProbeV120.kt"
           grep -F 'LAB IRK 수신 확인' "$SRC/CaseOwnerProbeV120.kt"
           ! grep -F '?.status != BatteryStatus.DISCONNECTED' "$SRC/presentation/components/BatteryView.kt"
-          grep -F 'CaseRadioEvidenceV138.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
+          grep -F 'CaseEntryV143.open(it)' "$SRC/presentation/screens/AppSettingsScreen.kt"
           grep -F 'BACKGROUND_BLE_SCANNER_DISABLED_V139' "$SRC/services/AirPodsService.kt"
           test -s "$SRC/CaseLabInventoryV139.kt"
           test -s "$SRC/CasePathV134.kt"
@@ -85,6 +86,9 @@ jobs:
           echo 'V134_READ_ONLY_OWNED_CANDIDATE_GATT_UUID_DISCOVERY=PASS'
           ! grep -F 'CaseSoundTrialV140.run' "$SRC/CaseRadioEvidenceV138.kt"
           grep -F 'CaseIdentityReadV137(g, observedSubtype)' "$SRC/CaseRadioEvidenceV138.kt"
+          test -s "$SRC/CaseRfCorrelationV143.kt"
+          test -s "$SRC/CaseEntryV143.kt"
+          echo 'V142_SINGLE_USER_CONTROLLED_CASE_RF_AB=PASS'
           echo 'V141_V140_FD44_WRITE_ACK_BUT_USER_CASE_SILENT_NO_UNIDENTIFIED_WRITE=PASS'
       - name: Install SDK and compile lab
         run: |
@@ -99,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          APK=dist/My_AirPods5_v1.0.41_A3529_CORRECT_12_02_SILENT_GATT.apk
+          APK=dist/My_AirPods5_v1.0.42_A3529_CONTROLLED_RF_AB_IDENTITY.apk
           cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
           unzip -t "$APK" | tail -1
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
@@ -107,16 +111,18 @@ jobs:
           unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CasePathV134' >/dev/null
           echo 'V134_CASE_PATH_CLASS_IN_REAL_APK=PASS'
           unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseSoundTrialV140' >/dev/null
-          echo 'V140_REAL_GATT_EXPERIMENT_IN_COMPILED_DEX=PASS'
+          echo 'V140_LEGACY_UNREACHABLE_GATT_CLASS_IN_DEX=PASS'
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseRfCorrelationV143' >/dev/null
+          echo 'V142_AB_CORRELATION_COMPILED_IN_REAL_DEX=PASS'
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
           sha256sum "$APK" | tee dist/SHA256.txt
           cp input/app_source/LICENSE dist/LICENSE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: MyAirPods5_v141_A3529_Identity_BLE_Only
+          name: MyAirPods5_v142_A3529_CONTROLLED_RF_AB
           path: dist/*
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "my-airpods5-v141-a3529-physical-silent-correct-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.41 A3529 true 12:02 subtype and documented GATT ACK but silent case' --notes 'SAME APP ID com.myairpods5.personal.radiolab as v138: Android debug certificates DIFFER, so direct update install not possible. DO NOT install on top. To replace, manually uninstall ONLY the 1.0.38 AirPods 신호 확인 LAB (this erases its local diagnostic/app keys if any), then install v1.0.39. This does not change number of apps. Do NOT remove personal baseline com.myairpods5.personal or older 1.0.34 LAB with possible IRK. Existing 1.0.36 and 1.0.37 clones can be force-stopped via Android App Info to avoid redundant scan. v139 turns OFF only its own cloned AirPodsService background BLE scan, leaving 1 on-demand scan, fixes v138 overlapping 12:02 other12 count, reports 12:19 non-connectable and ephemeral distinct address counts with no raw IDs. Has non-destructive LAB app role management screen. Manual opted-in FD44 NONOWNER sound START trial on explicitly selected connectable candidate only (may NOT be own A3529). No pairing resets. Physical closed-case beep NOT VERIFIED, no Apple owner authentication. Debug signature rotating: existing v139 radiolab cannot directly update. Uninstall ONLY radiolab if willing; NEVER delete original personal or v134 key store.' --prerelease
+          gh release create "my-airpods5-v142-a3529-controlled-rf-ab-r${GITHUB_RUN_NUMBER}" dist/* --title 'AirPods5 v1.0.42 near/shielded case RF correlation, read only, no sound yet' --notes 'Optional user controlled near-vs-shielded RF correlation (8s twice), no Bluetooth bonds/GATT writes. Old v141 read-only diagnostic remains. No cryptographic own-case ID or working case sound. SAME package com.myairpods5.personal.radiolab but freshly signed debug key: cannot direct-update installed v141. Uninstall ONLY radiolab if accepting LAB local data loss, never personal main, IRK-risk LAB, Android Auto or paired devices.' --prerelease
