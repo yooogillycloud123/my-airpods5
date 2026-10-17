@@ -1,6 +1,6 @@
 # AirPods 5 + REA: agent instruction
 Read `MY_AIRPODS5_PERMANENT_READ_FIRST_20261015.md` first, then `tools/rea_airpods/README_KO.md`.
-Do not replace the user’s Galaxy-only closed AirPods 5 wireless charging case Find My audible beep target (physical A-number not yet authenticated; Apple A3529/A3530 primary sources conflict).
+Do not replace the user’s Galaxy-only closed AirPods 5 wireless charging case Find My audible beep target (user's real purchase box establishes wireless case model A3529; individual BLE owner binding and authenticated playback remain unverified).
 Existing personal `com.myairpods5.personal` v1.0.10, v139 diagnostic `com.myairpods5.personal.radiolab`, older LAB storage and all Android Auto Golden assets are protected. Never delete/re-sign/unpair them.
 Use REA **on owned or expressly authorized APK only**, locally/offline; treat JADX output as static observations, not runtime events or owner authentication.
 Upstream official `morluto/rea` and npm `rea-agents@6.5.0`; JADX headless JAR SHA check as in lockfile.
@@ -8,3 +8,6 @@ For reproducible GitHub execution, modify source on a branch and trigger `.githu
 Never post device MACs, Apple Account tokens, IRK/ENC_KEY, Bluetooth raw captures or private app dex to GitHub logs/artifacts.
 Missing AirPods 5 wireless case actual GATT owner-auth + case-speaker play/stop means success gate CLOSED. Do not treat FD44 nonowner, 12:02, AirPods proximity model 0x3020, charge-start ding or AACP 0x31 as Find My case beep.
 This document guides REA-capable coding agents/ChatGPT reading the GitHub repo; **it does not itself install an MCP connector into ChatGPT**.
+
+## Real Apple iOS FindMy forensic lane — 2026-10-17
+Read `ci/ios_findmy_owner_port/APPLE_FINDMY_TO_ANDROID_PORT_REPORT_KO.md` (PR #5 merged, Actions `38987215581` SUCCESS) before suggesting another sound APK. Real official REA 6.5.0 imported a **pinned reference-source graph** from Apple iOS Mach-O **symbol diffs** + third-party reconstruction of `SPOwnerSession`, `SPBTFindingSession` and `SPAccessoryDiscoveryAndPairingSession`; JDK21 compiled the new Android-compatible owner/session/protocol gate and passed 19 assertions. **Actual Apple ARM64 FindMy binary WAS NOT REA/Ghidra decompiled; only public symbol and reconstructed-source evidence exists.** Do not overstate this. If a lawfully obtained original Apple Mach-O and expected SHA become available, run `ci/ios_findmy_owner_port/analyze_actual_findmy_macho_when_available.sh` with Ghidra configured. `CaseRingPort.java` is a source implementation of a safe controller boundary, NOT a working A3529 case ring command. Never send generic FD44 start/stop to unknown beacons: user's v140 phone had ACK 0/0 but CASE SILENT, and v141 fixed 12:02 incorrectly labelled 12:19. Protect all installed apps and paired devices.
