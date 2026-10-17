@@ -22,6 +22,34 @@ jobs:
         with:
           gradle-version: '9.6.0'
           cache-disabled: true
+      - name: Verify actual Android source closure before downloading SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path("aa-airpods-independent/aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge")
+          # These are referenced by the real Android app; a host-only copy
+          # outside app/src/main/java is NOT a compilable Android implementation.
+          required={
+            "OneApp2UniversalController.java":("OneApp2IndependentCycleEngine.java","OneApp2RoutingAdapter.java"),
+            "OneApp2LiveOutputObserver.java":("OneAppLabActivity.java","OneApp2IndependentEventCoordinator.java"),
+          }
+          missing=[]
+          for filename,callers in required.items():
+              path=src/filename
+              if not path.is_file():
+                  missing.append(filename)
+                  print(f"ANDROID_JAVA_MISSING={filename} REFERENCED_BY={','.join(callers)}")
+              else:
+                  print(f"ANDROID_JAVA_PRESENT={filename}")
+          if missing:
+              print(f"PUBLIC_ANDROID_SOURCE_CLOSURE=FAIL missing_distinct_classes={len(missing)}")
+              print("HOST_JAVA_PASS_IS_NOT_ANDROID_COMPILE_PASS")
+              print("APK_NOT_BUILT=YES")
+              raise SystemExit(1)
+          print("PUBLIC_ANDROID_SOURCE_CLOSURE=PASS")
+          PY
       - name: Install public Android build SDK
         shell: bash
         run: |
