@@ -118,6 +118,21 @@ public final class OneApp2IndependentCycleEngineTest {
         eq(engine.confirmAirpodsFocus(seventh,ytm,true,on,true,true,true),
             OneApp2IndependentCycleEngine.Result.FOCUS_ARMED,
             "seventh Focus arm after cancelled AirPods pending");
+        // Seventh AirPods was Focus-armed; a late loss must NOT suppress
+        // physical-disconnect vehicle recovery, despite no CURRENT Focus.
+        eq(engine.confirmAirpodsFocus(seventh,ytm,false,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.REARM_REQUIRED,
+            "seventh cycle Focus dropped before physical disconnection");
+        long seventhCar=engine.vehicleIntent(true);
+        check(seventhCar>seventh,"physical disconnect allowed after earlier Focus confirmation");
+        eq(engine.vehicleEvidence(seventhCar,vehicleProof(8)),
+            OneApp2IndependentCycleEngine.Result.VEHICLE_EVIDENCE_CONFIRMED_NO_OWNED_FOCUS,
+            "physical disconnect vehicle evidence with no Focus to abandon");
+        check(engine.evidenceVerifiedCycles()==6,
+            "sixth genuine AirPods-to-vehicle route counted");
+        check(engine.report().contains("FOCUS_EVIDENCE_CYCLES=4"),
+            "Focus cycles not incremented by lost-Focus physical disconnect");
+        System.out.println("PHYSICAL_DISCONNECT_NO_FOCUS_DEADLOCK=HOST_PASS");
         System.out.println("MANUAL_VEHICLE_OVERRIDES_PENDING_AIRPODS=HOST_PASS");
         System.out.println("ONEAPP2_INDEPENDENT_CYCLE_HOST_ASSERTIONS="+checks);
         System.out.println("REPEAT_3_CYCLES_APP_SWITCH_FOCUS_REARM=HOST_PASS");
