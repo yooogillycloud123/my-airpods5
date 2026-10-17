@@ -41,11 +41,14 @@ jobs:
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2MediaOwnerSnapshotTest
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2RepeatFocusPlannerTest
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2IndependentCycleEngineTest
-          echo 'package com.aaairpods.bridge; public final class OneApp2Identity {public static final String APP_ID="com.aaairpods.oneapp.lab";}' > "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge/OneApp2Identity.java"
+          # Compile the ACTUAL Android-tree package identity, never a fake stub:
+          # A wrong fallback here could accidentally use old Golden :47651.
           javac --release 17 -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" -d "$RUNNER_TEMP/aa-oneapp2-public/classes" \
-            "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge/OneApp2Identity.java" \
+            "$ANDROID_SRC/OneApp2Identity.java" \
             "$SRC/OneApp2IntegrationMatrix.java" \
+            "$TEST/OneApp2IdentityTest.java" \
             "$TEST/OneApp2IntegrationMatrixTest.java"
+          java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2IdentityTest
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2IntegrationMatrixTest
       - name: Record exact public code build status
         shell: bash
