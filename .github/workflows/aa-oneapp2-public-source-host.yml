@@ -26,17 +26,21 @@ jobs:
           ANDROID_SRC=aa-airpods-independent/aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
           TEST=aa-airpods-independent/tests
           cmp "$SRC/OneApp2GoldenMechanics.java" "$ANDROID_SRC/OneApp2GoldenMechanics.java"
+          cmp "$SRC/OneApp2IndependentCycleEngine.java" "$ANDROID_SRC/OneApp2IndependentCycleEngine.java"
+          cmp "$SRC/OneApp2RepeatFocusPlanner.java" "$ANDROID_SRC/OneApp2RepeatFocusPlanner.java"
           mkdir -p "$RUNNER_TEMP/aa-oneapp2-public/classes" "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge"
           javac --release 17 -d "$RUNNER_TEMP/aa-oneapp2-public/classes" \
             "$ANDROID_SRC/OneApp2GoldenMechanics.java" \
             "$SRC/OneApp2UniversalController.java" \
             "$SRC/OneApp2MediaOwnerSnapshot.java" \
             "$SRC/OneApp2RepeatFocusPlanner.java" \
-            "$SRC/OneApp2IndependentCycleEngine.java" \
+            "$ANDROID_SRC/OneApp2IndependentCycleEngine.java" \
             "$TEST/OneApp2MediaOwnerSnapshotTest.java" \
-            "$TEST/OneApp2RepeatFocusPlannerTest.java"
+            "$TEST/OneApp2RepeatFocusPlannerTest.java" \
+            "$TEST/OneApp2IndependentCycleEngineTest.java"
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2MediaOwnerSnapshotTest
           java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2RepeatFocusPlannerTest
+          java -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" com.aaairpods.bridge.OneApp2IndependentCycleEngineTest
           echo 'package com.aaairpods.bridge; public final class OneApp2Identity {public static final String APP_ID="com.aaairpods.oneapp.lab";}' > "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge/OneApp2Identity.java"
           javac --release 17 -cp "$RUNNER_TEMP/aa-oneapp2-public/classes" -d "$RUNNER_TEMP/aa-oneapp2-public/classes" \
             "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge/OneApp2Identity.java" \
