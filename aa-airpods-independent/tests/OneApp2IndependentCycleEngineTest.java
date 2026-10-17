@@ -99,6 +99,26 @@ public final class OneApp2IndependentCycleEngineTest {
         check(engine.report().contains("FOCUS_EVIDENCE_CYCLES=4"),
             "Focus count excludes unowned fourth handoff");
         System.out.println("VEHICLE_NO_OWNED_FOCUS_CONFIRM_AND_REENTRY=HOST_PASS");
+        // Regression: an explicit vehicle click overrides a pending AirPods
+        // Focus pre-arm. No delayed callback can re-activate AirPods.
+        long sixth=engine.airpodsIntent(netflix,on,true,true,true);
+        check(sixth>fifthCar,"sixth AirPods intent pending");
+        long sixthCar=engine.vehicleIntent(false);
+        check(sixthCar>sixth,"vehicle click cancels still-pending AirPods");
+        eq(engine.confirmAirpodsFocus(sixth,netflix,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.STALE,
+            "late Focus callback cannot override a manual vehicle request");
+        eq(engine.vehicleEvidence(sixthCar,vehicleProof(8)),
+            OneApp2IndependentCycleEngine.Result.VEHICLE_EVIDENCE_CONFIRMED_NO_OWNED_FOCUS,
+            "manual restore before Focus grant confirms sound without releasing foreign Focus");
+        check(engine.evidenceVerifiedCycles()==5,
+            "unconfirmed AirPods pending action cannot fabricate completed cycle");
+        long seventh=engine.airpodsIntent(ytm,on,true,true,true);
+        check(seventh>sixthCar,"seventh AirPods reentry available");
+        eq(engine.confirmAirpodsFocus(seventh,ytm,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.FOCUS_ARMED,
+            "seventh Focus arm after cancelled AirPods pending");
+        System.out.println("MANUAL_VEHICLE_OVERRIDES_PENDING_AIRPODS=HOST_PASS");
         System.out.println("ONEAPP2_INDEPENDENT_CYCLE_HOST_ASSERTIONS="+checks);
         System.out.println("REPEAT_3_CYCLES_APP_SWITCH_FOCUS_REARM=HOST_PASS");
         System.out.println("ACTUAL_EXTERNAL_AUDIO_POLICY=NOT_TESTED");
