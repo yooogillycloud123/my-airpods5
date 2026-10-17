@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+    <!-- All inherited active Golden UI/daemon/Focus entrypoints are REMOVED
+         from the parallel-install LAB. It is read-only until exclusive
+         ownership and full runtime parity are separately reviewed. -->
+    <application android:label="AA AirPods Integration LAB"
+                 tools:replace="android:label">
+        <activity android:name="com.aaairpods.bridge.R25FixActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.AAIntegratedHubActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.AAGitHubUpdateActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.AAOneAppSystemActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.GoldenBPhoneRecoveryActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.GoldenInternalDiagnosticsActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.InternalEdge23FocusActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.InternalEdge24FocusActivity"
+                  tools:node="remove" />
+        <activity android:name="com.aaairpods.bridge.ActionActivity"
+                  tools:node="remove" />
+        <service android:name="com.aaairpods.bridge.AutoRouteService"
+                 tools:node="remove" />
+        <service android:name="com.aaairpods.bridge.OneAppInternalFocusService"
+                 tools:node="remove" />
+        <!-- Both formerly external focus roles are embedded in this ONE new
+             APK. Distinct process lifecycles but same package UID: physical
+             focus-equivalence is not yet proven. Never launched by default. -->
+        <service android:name="com.aaairpods.bridge.IntegratedManualEdgeService"
+                 tools:replace="android:exported"
+                 android:exported="false"
+                 android:process=":oneapp_manual_edge"
+                 android:foregroundServiceType="mediaPlayback" />
+        <service android:name="com.aaairpods.bridge.IntegratedDisconnectEdgeService"
+                 tools:replace="android:exported"
+                 android:exported="false"
+                 android:process=":oneapp_disconnect_edge"
+                 android:foregroundServiceType="mediaPlayback" />
+        <!-- LAB's own ADB identity, not the existing R25 identity. -->
+        <service android:name="com.aaairpods.bridge.PairingService"
+                 tools:replace="android:exported"
+                 android:exported="false"
+                 android:foregroundServiceType="connectedDevice" />
+        <provider android:name="com.aaairpods.bridge.VerifiedUpdateContentProvider"
+                  tools:node="remove" />
+        <provider android:name="com.aaairpods.bridge.OneAppControllerModeProvider"
+                  tools:node="remove" />
+
+        <activity
+            android:name="com.aaairpods.bridge.OneAppLabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
