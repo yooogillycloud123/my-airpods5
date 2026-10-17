@@ -42,7 +42,14 @@ android {
     }
 
     buildTypes {
-        debug { signingConfig signingConfigs.stable }
+        debug {
+            // Public isolated LAB builds may use the Android debug identity;
+            // existing production/R25 signer is never published to the public repo.
+            // When the original private signer is explicitly supplied, retain it
+            // to support same-signer LAB updates instead of changing identities.
+            signingConfig (System.getenv("AA_SIGN_STORE")
+                ? signingConfigs.stable : signingConfigs.debug)
+        }
         release {
             signingConfig signingConfigs.stable
             minifyEnabled false
