@@ -84,4 +84,30 @@ public final class OneApp2GoldenMechanics {
         return vehicleRouteSeen && huSeen
             && (bottomHalfSeen || pcmSeen) && !androidAutoDisconnected;
     }
+    /**
+     * Golden B outcome classification AFTER its EXISTING evidence deadline.
+     * Does not add a new timer, initiate Focus, or change audio policy.
+     * The Golden reference returns 4 (do not disturb playback) when the
+     * vehicle route/HU and bottom-half or PCM appear without full proof.
+     */
+    public enum HandoffVerdict {
+        PHYSICAL_CHAIN_CONFIRMED, WAIT_EXISTING_WINDOW,
+        INDETERMINATE_HOLD_NO_RETRY, WINDOW_MISS
+    }
+
+    public static HandoffVerdict classifyHandoff(
+            boolean sameOwner, boolean aaRemote, boolean huFocus,
+            boolean bottomHalf, boolean mediaOwnerFocus,
+            boolean pcmSeen, boolean androidAutoDisconnected,
+            long evidenceStableSeconds, boolean originalWindowExpired) {
+        if(stableVehicleHandoff(sameOwner,aaRemote,huFocus,bottomHalf,
+                mediaOwnerFocus,androidAutoDisconnected,evidenceStableSeconds))
+            return HandoffVerdict.PHYSICAL_CHAIN_CONFIRMED;
+        if(!originalWindowExpired)
+            return HandoffVerdict.WAIT_EXISTING_WINDOW;
+        if(vehicleEvidenceIndeterminate(aaRemote,huFocus,bottomHalf,
+                pcmSeen,androidAutoDisconnected))
+            return HandoffVerdict.INDETERMINATE_HOLD_NO_RETRY;
+        return HandoffVerdict.WINDOW_MISS;
+    }
 }
