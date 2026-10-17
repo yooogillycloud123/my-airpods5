@@ -17,6 +17,6 @@ public final class OneApp2Identity {
         return APP_ID.equals(pkg);
     }
     public static int daemonPort(String pkg) {
-        return isOneApp2(pkg) ? PORT : RouteDaemon.DEFAULT_PORT;
+        return isOneApp2(pkg) ? PORT : -1; // no fallback to legacy Golden daemon
     }
 }
