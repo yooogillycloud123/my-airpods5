@@ -56,6 +56,13 @@ public final class OneApp2IndependentCycleEngine {
             return Result.REARM_REQUIRED;
         if(a!=OneApp2RepeatFocusPlanner.Action.FOCUS_CONFIRMED)
             return Result.BLOCKED;
+        // App switching or a dropped/rearmed Generic Focus can be observed
+        // after the route's initial generation has ALREADY been confirmed.
+        // A second observe(generation) would be STALE_CALLBACK, even though
+        // the renewed Focus grant belongs to this same independent cycle.
+        // Never create a new route request merely to acknowledge Focus rearm.
+        if(stage==Stage.AIRPODS_POLICY_ARMED)
+            return Result.FOCUS_ARMED;
         OneApp2UniversalController.Decision d=route.observe(
             generation,new OneApp2UniversalController.Evidence(
                 directA2dp,bypass,true,false,false,false,false));
