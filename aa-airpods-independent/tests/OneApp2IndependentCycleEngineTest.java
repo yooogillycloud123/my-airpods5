@@ -62,6 +62,43 @@ public final class OneApp2IndependentCycleEngineTest {
             check(engine.evidenceVerifiedCycles()==cycle,
                 "cycle "+cycle+" verified return counted exactly once");
         }
+        // Regression: vehicle physically returns after media app switch but
+        // BEFORE the fresh owner's Focus policy has been re-registered.
+        // The audio route is allowed to be confirmed; there is NO owned
+        // Focus to release, and the next AirPods cycle must remain possible.
+        long fourth=engine.airpodsIntent(ytm,on,true,true,true);
+        check(fourth>0,"fourth AirPods generation");
+        eq(engine.confirmAirpodsFocus(fourth,ytm,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.FOCUS_ARMED,
+            "fourth initial Focus");
+        eq(engine.confirmAirpodsFocus(fourth,netflix,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.REARM_REQUIRED,
+            "app changed during fourth Focus before new registration");
+        long fourthCar=engine.vehicleIntent(false);
+        check(fourthCar>fourth,"fourth vehicle intent");
+        eq(engine.vehicleEvidence(fourthCar,vehicleProof(8)),
+            OneApp2IndependentCycleEngine.Result.VEHICLE_EVIDENCE_CONFIRMED_NO_OWNED_FOCUS,
+            "vehicle heard before Focus rearm: no unowned Focus abandon");
+        eq(engine.stage(),
+            OneApp2IndependentCycleEngine.Stage.VEHICLE_EVIDENCE_CONFIRMED,
+            "vehicle state cannot deadlock after unowned Focus evidence");
+        check(engine.evidenceVerifiedCycles()==4,"vehicle route completed fourth return");
+        check(engine.report().contains("FOCUS_EVIDENCE_CYCLES=3"),
+            "fourth route does not falsely count an owned Focus completion");
+
+        long fifth=engine.airpodsIntent(youtube,on,true,true,true);
+        check(fifth>fourthCar,"fifth cycle possible without app restart");
+        eq(engine.confirmAirpodsFocus(fifth,youtube,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.FOCUS_ARMED,
+            "fifth Focus rearm after vehicle without owned Focus");
+        long fifthCar=engine.vehicleIntent(false);
+        eq(engine.vehicleEvidence(fifthCar,vehicleProof(8)),
+            OneApp2IndependentCycleEngine.Result.VEHICLE_EVIDENCE_CONFIRMED,
+            "fifth cycle owned Focus return");
+        check(engine.evidenceVerifiedCycles()==5,"fifth route counted");
+        check(engine.report().contains("FOCUS_EVIDENCE_CYCLES=4"),
+            "Focus count excludes unowned fourth handoff");
+        System.out.println("VEHICLE_NO_OWNED_FOCUS_CONFIRM_AND_REENTRY=HOST_PASS");
         System.out.println("ONEAPP2_INDEPENDENT_CYCLE_HOST_ASSERTIONS="+checks);
         System.out.println("REPEAT_3_CYCLES_APP_SWITCH_FOCUS_REARM=HOST_PASS");
         System.out.println("ACTUAL_EXTERNAL_AUDIO_POLICY=NOT_TESTED");
