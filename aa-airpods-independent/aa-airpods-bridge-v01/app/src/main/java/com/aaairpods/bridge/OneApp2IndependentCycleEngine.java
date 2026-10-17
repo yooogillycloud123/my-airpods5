@@ -14,7 +14,8 @@ public final class OneApp2IndependentCycleEngine {
                         VEHICLE_PENDING, VEHICLE_EVIDENCE_CONFIRMED }
     public enum Result { NEEDS_FOCUS_PREARM, FOCUS_ARMED,
                          REARM_REQUIRED, WAIT_VEHICLE_EVIDENCE,
-                         VEHICLE_EVIDENCE_CONFIRMED, STALE, BLOCKED }
+                         VEHICLE_EVIDENCE_CONFIRMED, VEHICLE_EVIDENCE_CONFIRMED_NO_OWNED_FOCUS,
+                         STALE, BLOCKED }
 
     private final OneApp2UniversalController route=
         new OneApp2UniversalController();
@@ -96,14 +97,21 @@ public final class OneApp2IndependentCycleEngine {
             generation,proof);
         if(a==OneApp2RepeatFocusPlanner.Action.STALE_CALLBACK)
             return Result.STALE;
-        if(a!=OneApp2RepeatFocusPlanner.Action.RELEASE_ONLY_AFTER_VEHICLE_PASS)
+        // Vehicle sound may recover while the independent Generic Focus grant
+        // is still missing (for example, app switch before re-arm completes).
+        // Confirm this physical return without ever authorizing release of a
+        // Focus instance that this app does not own; avoid WAIT deadlock.
+        boolean hasOwnedFocus=a==OneApp2RepeatFocusPlanner.Action.RELEASE_ONLY_AFTER_VEHICLE_PASS;
+        boolean noOwnedFocus=a==OneApp2RepeatFocusPlanner.Action.VEHICLE_CONFIRMED_NO_OWNED_FOCUS;
+        if(!hasOwnedFocus && !noOwnedFocus)
             return Result.WAIT_VEHICLE_EVIDENCE;
         OneApp2UniversalController.Decision confirmed=
             route.observe(generation,proof);
         if(confirmed!=OneApp2UniversalController.Decision.VEHICLE_EVIDENCE_READY)
             return Result.BLOCKED;
         stage=Stage.VEHICLE_EVIDENCE_CONFIRMED;
-        return Result.VEHICLE_EVIDENCE_CONFIRMED;
+        return noOwnedFocus ? Result.VEHICLE_EVIDENCE_CONFIRMED_NO_OWNED_FOCUS
+                            : Result.VEHICLE_EVIDENCE_CONFIRMED;
     }
 
     public synchronized Stage stage(){return stage;}
