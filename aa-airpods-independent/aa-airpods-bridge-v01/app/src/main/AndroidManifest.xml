@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.aaairpods.bridge" />
+        <package android:name="com.aaairpods.r25fix" />
+        <package android:name="com.aaairpods.unified" />
+        <package android:name="com.aaairpods.runtimemgr" />
+        <package android:name="com.aaairpods.reboot" />
+        <package android:name="com.aaairpods.rescue" />
+        <package android:name="com.aaairpods.edge23" />
+        <package android:name="com.aaairpods.edge24" />
+        <package android:name="com.aaairpods.r3btst" />
+        <package android:name="com.airpodspopup" />
+    </queries>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:label="AA AirPods FINAL P1"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!-- v26057: New launcher only. Entire original Golden activity stays present. -->
+        <activity android:name=".R25FixActivity" android:exported="true" />
+        <activity android:name=".AAIntegratedHubActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".AAGitHubUpdateActivity" android:exported="false" />
+        <activity android:name=".AAOneAppSystemActivity" android:exported="false" />
+        <activity android:name=".GoldenBPhoneRecoveryActivity" android:exported="false" />
+
+        <activity
+            android:name=".GoldenInternalDiagnosticsActivity"
+            android:exported="false" />
+        <!-- Dormant internal edge parity targets. Golden B still invokes
+             the separate edge23/edge24 APKs until a tested controller migration. -->
+        <activity android:name=".InternalEdge23FocusActivity"
+            android:exported="false" />
+        <activity android:name=".InternalEdge24FocusActivity"
+            android:exported="false" />
+
+        <provider
+            android:name=".VerifiedUpdateContentProvider"
+            android:authorities="com.aaairpods.r25fix.verifiedupdates"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <!-- Actual one-package internalized Bridge implementation. Non-exported.
+             Not activated by the Golden-B-backed normal output buttons until
+             an independently validated Controller/Focus migration is ready. -->
+        <activity android:name=".ActionActivity" android:exported="false" />
+        <service android:name=".AutoRouteService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- Shell-only read-only mode IPC: provider itself rejects every uid except 2000.
+             The existing Golden-B Controller uses the original external Bridge and
+             cannot be migrated merely by declaring this provider. -->
+        <provider android:name=".OneAppControllerModeProvider"
+            android:authorities="com.aaairpods.r25fix.controllermode"
+            android:exported="true"
+            android:readPermission="android.permission.DUMP" />
+        <!-- In-package focus pulse port. Shell access is additionally restricted
+             by the privileged platform DUMP permission. Not invoked by live B. -->
+        <service android:name=".OneAppInternalFocusService"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:foregroundServiceType="mediaPlayback" />
+        <!-- Two independent Binder clients/process lifecycles from ONE APK.
+             Android assigns the same package UID to both; process != UID. -->
+        <service android:name=".IntegratedManualEdgeService"
+            android:process=":oneapp_manual_edge"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:foregroundServiceType="mediaPlayback" />
+        <service android:name=".IntegratedDisconnectEdgeService"
+            android:process=":oneapp_disconnect_edge"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name=".PairingService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+    </application>
+</manifest>
