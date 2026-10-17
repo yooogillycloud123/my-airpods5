@@ -274,7 +274,7 @@ public class PairingService extends Service {
     }
 
     private Notification buildDoneNotification(String title, String text) {
-        Intent openApp = new Intent(this, R25FixActivity.class);
+        Intent openApp = new Intent(this, OneAppLabActivity.class);
         openApp.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent content = PendingIntent.getActivity(
                 this,
