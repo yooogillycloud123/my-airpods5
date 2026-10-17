@@ -66,7 +66,11 @@ android {
 }
 
 dependencies {
-    compileOnly files("$rootDir/r25-hidden-api-stubs.jar")
+    // PUBLIC standalone checkout must not treat a missing private compile stub as a file dependency.
+    def optionalHiddenApiStub = file("$rootDir/r25-hidden-api-stubs.jar")
+    if (optionalHiddenApiStub.isFile()) {
+        compileOnly files(optionalHiddenApiStub)
+    }
     implementation 'com.github.MuntashirAkon:libadb-android:3.1.1'
     implementation 'com.github.MuntashirAkon:sun-security-android:1.1'
     implementation 'org.conscrypt:conscrypt-android:2.5.3'
