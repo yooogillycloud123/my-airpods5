@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="airpods_on"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_media_play"
+        android:shortcutShortLabel="@string/shortcut_airpods_on_short"
+        android:shortcutLongLabel="@string/shortcut_airpods_on_long">
+        <intent
+            android:action="com.aaairpods.bridge.action.ENABLE"
+            android:targetPackage="com.aaairpods.bridge"
+            android:targetClass="com.aaairpods.bridge.ActionActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="airpods_restore"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_media_pause"
+        android:shortcutShortLabel="@string/shortcut_restore_short"
+        android:shortcutLongLabel="@string/shortcut_restore_long">
+        <intent
+            android:action="com.aaairpods.bridge.action.RESTORE"
+            android:targetPackage="com.aaairpods.bridge"
+            android:targetClass="com.aaairpods.bridge.ActionActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="airpods_auto"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_popup_sync"
+        android:shortcutShortLabel="@string/shortcut_auto_short"
+        android:shortcutLongLabel="@string/shortcut_auto_long">
+        <intent
+            android:action="com.aaairpods.bridge.action.START_AUTO"
+            android:targetPackage="com.aaairpods.bridge"
+            android:targetClass="com.aaairpods.bridge.ActionActivity" />
+    </shortcut>
+</shortcuts>
