@@ -88,6 +88,21 @@ jobs:
             exit 57
           fi
           echo "Pinned private source, Golden immutables and integrated OneApp2 checks passed."
+      - name: Verify existing PRIVATE Android executable class closure without public source migration
+        working-directory: golden-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
+          for class in OneApp2UniversalController OneApp2LiveOutputObserver; do
+            test -s "$SRC/$class.java" || {
+              echo "::error title=PRIVATE_ANDROID_SOURCE_MISSING::$class absent in the original complete source."
+              exit 59
+            }
+            echo "PRIVATE_ANDROID_CLASS_PRESENT=$class"
+          done
+          echo 'ANDROID_EXECUTABLE_CLASS_CLOSURE=PASS_FROM_EXISTING_PRIVATE_SOURCE'
+          echo 'NO_CLASS_COPIES_TO_PUBLIC=YES'
       - name: Immutable focus lifecycle host regression
         working-directory: golden-src
         shell: bash
