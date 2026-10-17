@@ -25,6 +25,12 @@ jobs:
           SRC=aa-airpods-independent/source
           ANDROID_SRC=aa-airpods-independent/aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
           TEST=aa-airpods-independent/tests
+          # User-requested freeze: no new standalone 8-second wait layer.
+          # The original Golden B controller already owns vehicle handoff
+          # evidence timing; do not stack another gate on top of that.
+          test ! -e "$SRC/OneApp2VehicleEvidenceClock.java"
+          test ! -e "$ANDROID_SRC/OneApp2VehicleEvidenceClock.java"
+          grep -Fq 'VEHICLE_EVIDENCE_STABLE_SECONDS=8' "$SRC/OneApp2GoldenMechanics.java"
           cmp "$SRC/OneApp2GoldenMechanics.java" "$ANDROID_SRC/OneApp2GoldenMechanics.java"
           cmp "$SRC/OneApp2IndependentCycleEngine.java" "$ANDROID_SRC/OneApp2IndependentCycleEngine.java"
           cmp "$SRC/OneApp2RepeatFocusPlanner.java" "$ANDROID_SRC/OneApp2RepeatFocusPlanner.java"
