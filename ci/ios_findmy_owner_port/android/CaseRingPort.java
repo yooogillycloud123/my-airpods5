@@ -78,13 +78,20 @@ public final class CaseRingPort {
         }
         busy=true;
         recorder.accept(Stage.STARTING);
-        boolean started=false, stopped=false;
+        boolean attempted=false, started=false, stopped=false;
         try {
-            started=protocol.startOnAuthenticatedCase();
-            if (started) recorder.accept(Stage.SOUND_REQUEST_ACK);
+            attempted=true;
+            try {
+                started=protocol.startOnAuthenticatedCase();
+                if (started) recorder.accept(Stage.SOUND_REQUEST_ACK);
+            } catch (RuntimeException ignored) {
+                // Timeout/exception does NOT prove the device rejected START.
+                started=false;
+            }
         } finally {
-            // Always attempt STOP after starting, including future failure paths.
-            if (started) {
+            // Attempt STOP after ANY issued start, even when START timed out:
+            // prevents accidentally leaving a real case speaker ringing.
+            if (attempted) {
                 recorder.accept(Stage.STOPPING);
                 try { stopped=protocol.stopOnAuthenticatedCase(); }
                 catch (RuntimeException ignored) { stopped=false; }
@@ -92,7 +99,12 @@ public final class CaseRingPort {
             busy=false;
             recorder.accept(Stage.DONE);
         }
-        if (!started || !stopped || !acoustics.hadActualAudibleCaseSoundInClosedCaseState())
+        boolean audible=false;
+        if (started && stopped) {
+            try { audible=acoustics.hadActualAudibleCaseSoundInClosedCaseState(); }
+            catch (RuntimeException ignored) { audible=false; }
+        }
+        if (!started || !stopped || !audible)
             return Code.CASE_AUDIBLE_NOT_VALIDATED;
         return Code.READY;
     }
