@@ -35,7 +35,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           w=Path(".github/workflows/build-aa-golden-capsule.yml").read_text()
-          assert "AA_EXPECTED_SOURCE_SHA: '33d3f173c6e91b2dc9f244152e1627fef748078b'" in w
+          assert "AA_EXPECTED_SOURCE_SHA: '23fc080adb7e71b22ee75802871099514b20f0d4'" in w
           assert "AA_ORIGINAL_SIGNING_SOURCE_SHA: '9ae4b5bf1472f28681f08c597ce50161d0176134'" in w
           assert "secrets.AA_PRIVATE_SOURCE_PAT" in w
           assert "secrets.AA_SIGN_" not in w
@@ -47,7 +47,8 @@ jobs:
           assert "persist-credentials: false" in w
           assert "trap 'rm -f" in w
           assert "github.ref == 'refs/heads/main'" in w
-          assert "\\n  push:\\n" not in w
+          assert "paths: ['.github/workflows/build-aa-golden-capsule.yml']" in w
+          assert "branches: [main]" in w
           assert "AA_EXPECTED_SIGNER_SHA256" in w
           assert "AA_AirPods_v26080_ORIGINAL_SIGNED_READONLY_CANDIDATE_NOT_FINAL.apk" in w
           print("AA_ONE_SECRET_PRIVATE_READ_BUILD_WORKFLOW=STATIC_PASS")
