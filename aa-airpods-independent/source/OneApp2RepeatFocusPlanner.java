@@ -15,7 +15,7 @@ public final class OneApp2RepeatFocusPlanner {
                         VEHICLE_WAIT_EVIDENCE, VEHICLE_CONFIRMED, BLOCKED }
     public enum Action { PREARM_REQUIRED, FOCUS_CONFIRMED, REARM_REQUIRED,
                          HOLD_FOCUS_DURING_HU, WAIT_VEHICLE_EVIDENCE,
-                         RELEASE_ONLY_AFTER_VEHICLE_PASS, BLOCKED,
+                         RELEASE_ONLY_AFTER_VEHICLE_PASS, VEHICLE_CONFIRMED_NO_OWNED_FOCUS, BLOCKED,
                          INDETERMINATE, STALE_CALLBACK }
     public enum RestoreCause { EXPLICIT_USER, PHYSICAL_DISCONNECT }
 
@@ -118,11 +118,16 @@ public final class OneApp2RepeatFocusPlanner {
                 e.bottomHalfAvailable,e.mediaOwnerFocusGain,
                 e.androidAutoDisconnected,e.evidenceStableSeconds))
             return Action.WAIT_VEHICLE_EVIDENCE;
-        if(priorAirpodsConfirmed) verifiedVehicleCycles++;
+        // A vehicle-route match alone cannot authorize releasing another
+        // package's Focus. Only release Focus if THIS cycle previously
+        // recorded an accepted AirPods Focus grant.
+        boolean releaseOwnedFocus=priorAirpodsConfirmed;
+        if(releaseOwnedFocus) verifiedVehicleCycles++;
         priorAirpodsConfirmed=false;
         ownerKey=null;
         phase=Phase.VEHICLE_CONFIRMED;
-        return Action.RELEASE_ONLY_AFTER_VEHICLE_PASS;
+        return releaseOwnedFocus ? Action.RELEASE_ONLY_AFTER_VEHICLE_PASS
+                                 : Action.VEHICLE_CONFIRMED_NO_OWNED_FOCUS;
     }
 
     public synchronized Phase phase(){return phase;}
