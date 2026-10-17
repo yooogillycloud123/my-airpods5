@@ -329,8 +329,10 @@ jobs:
             echo 'GOLDEN_RELEASE_PARITY_STATIC=PASS' 
           else
             rc=$?
-            if [ "$rc" -ne 61 ]; then echo 'PARITY_CHECK_UNEXPECTED_ERROR'; exit 61; fi
-            echo 'GOLDEN_RELEASE_PARITY=FAIL_EXPECTED_EXIT_61;DIAGNOSTIC_LAB_NOT_FINAL'
+            # The release gate stays RELEASE BLOCKING in the original
+            # build-original-signer job above. This diagnostic-only job
+            # records any nonzero gate status without calling it PASS.
+            echo "GOLDEN_RELEASE_PARITY=FAIL_EXIT_${rc};DIAGNOSTIC_LAB_NOT_FINAL"
           fi
           rm -f "$RUNNER_TEMP/parity.txt"
       - name: Replay read-only HU/PCM 8s classifier on original success and negative cases
