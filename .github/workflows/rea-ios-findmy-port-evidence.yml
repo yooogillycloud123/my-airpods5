@@ -68,9 +68,25 @@ jobs:
             ci/ios_findmy_owner_port/android/CaseRingPort.java \
             ci/ios_findmy_owner_port/android/CaseRingPortTest.java
           java -ea -cp "$RUNNER_TEMP/ios-port-classes" com.myairpods5.casering.core.CaseRingPortTest
-      - name: Publish allowlisted source facts ONLY (no private keys, decompiled text or Apple binary)
+      - name: Package REAL tested Android port source, report and sanitized Apple evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/ios_port_release
+          cp ci/ios_findmy_owner_port/APPLE_FINDMY_TO_ANDROID_PORT_REPORT_KO.md dist/ios_port_release/
+          cp ci/ios_findmy_owner_port/audit_apple_findmy.py dist/ios_port_release/
+          cp ci/ios_findmy_owner_port/analyze_actual_findmy_macho_when_available.sh dist/ios_port_release/
+          cp ci/ios_findmy_owner_port/android/CaseRingPort.java dist/ios_port_release/
+          cp ci/ios_findmy_owner_port/android/CaseRingPortTest.java dist/ios_port_release/
+          cp dist/REA_Apple_FindMy_26_Source_Port_PROOF.json dist/ios_port_release/
+          (cd dist/ios_port_release && zip -q -9 -r ../AirPods5_REA_APPLE_FINDMY_ANDROID_PORT_SOURCE_20261017.zip .)
+          unzip -t dist/AirPods5_REA_APPLE_FINDMY_ANDROID_PORT_SOURCE_20261017.zip
+          sha256sum dist/AirPods5_REA_APPLE_FINDMY_ANDROID_PORT_SOURCE_20261017.zip
+      - name: Publish only source/research summary and explicitly gated port (no Apple binary)
         uses: actions/upload-artifact@v4
         with:
           name: REA_Apple_FindMy_Android_Owner_Port_Evidence
-          path: dist/REA_Apple_FindMy_26_Source_Port_PROOF.json
+          path: |
+            dist/REA_Apple_FindMy_26_Source_Port_PROOF.json
+            dist/AirPods5_REA_APPLE_FINDMY_ANDROID_PORT_SOURCE_20261017.zip
           retention-days: 7
