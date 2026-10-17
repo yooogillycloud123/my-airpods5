@@ -1,0 +1,73 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.aaairpods.bridge'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 29
+        targetSdk 36
+        versionCode 26080
+        versionName '26.0.20-golden-capsule-existing-original-readonly-not-final'
+
+        ndk { abiFilters 'arm64-v8a' }
+        externalNativeBuild { cmake { arguments '-DANDROID_STL=none' } }
+    }
+
+
+    // Exactly one integrated Java/source engine. Only the installation identity
+    // differs: parallel-install LAB vs legacy-data-preserving production.
+    flavorDimensions 'edition'
+    productFlavors {
+        lab {
+            dimension 'edition'
+            applicationId 'com.aaairpods.oneapp.lab'
+            versionNameSuffix '-shadow-lab'
+        }
+        production {
+            dimension 'edition'
+            applicationId 'com.aaairpods.r25fix'
+        }
+    }
+
+    signingConfigs {
+        stable {
+            storeFile file(System.getenv("AA_SIGN_STORE") ?: "aa-airpods-stable.jks")
+            storePassword System.getenv("AA_SIGN_STORE_PASS") ?: ""
+            keyAlias System.getenv("AA_SIGN_KEY_ALIAS") ?: "aaairpods"
+            keyPassword System.getenv("AA_SIGN_KEY_PASS") ?: ""
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig signingConfigs.stable }
+        release {
+            signingConfig signingConfigs.stable
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    packagingOptions { jniLibs { useLegacyPackaging true } }
+}
+
+dependencies {
+    compileOnly files("$rootDir/r25-hidden-api-stubs.jar")
+    implementation 'com.github.MuntashirAkon:libadb-android:3.1.1'
+    implementation 'com.github.MuntashirAkon:sun-security-android:1.1'
+    implementation 'org.conscrypt:conscrypt-android:2.5.3'
+}
