@@ -34,11 +34,15 @@ jobs:
           set -uo pipefail
           ROOT=aa-airpods-independent/aa-airpods-bridge-v01
           mkdir -p "$RUNNER_TEMP/oneapp2"
-          gradle -p "$ROOT" :app:compileLabDebugJavaWithJavac --no-daemon             > "$RUNNER_TEMP/oneapp2/gradle.log" 2>&1
+          set +e
+          gradle -p "$ROOT" :app:compileLabDebugJavaWithJavac --no-daemon > "$RUNNER_TEMP/oneapp2/gradle.log" 2>&1
           result=$?
+          set -e
           if [ "$result" -ne 0 ]; then
             echo "::error title=PUBLIC_ANDROID_SOURCE_COMPILE_FAILED::Source is incomplete or build setup failed. No APK built."
-            grep -E -m 24 '(^.*\.java:[0-9]+: error:|^> Task .* FAILED|^\* What went wrong:|^  Could not|^Could not|^FAILURE:)' "$RUNNER_TEMP/oneapp2/gradle.log" || true
+            echo '---- bounded public Gradle error summary ----'
+            grep -E -m 32 '(error:|^> Task .* FAILED|^\\* What went wrong:|^  Could not|^> Could not|^Could not|^FAILURE:|^> Plugin|^> No matching|^> Cannot|^\\s*Caused by:)' "$RUNNER_TEMP/oneapp2/gradle.log" || true
+            tail -n 16 "$RUNNER_TEMP/oneapp2/gradle.log" | sed -E 's#(/home/runner/)[^ ]+#<RUNNER_PATH>#g'
             exit "$result"
           fi
           echo 'PUBLIC_ANDROID_JAVA_COMPILE=PASS'
