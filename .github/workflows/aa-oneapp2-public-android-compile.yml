@@ -47,4 +47,36 @@ jobs:
           fi
           echo 'PUBLIC_ANDROID_JAVA_COMPILE=PASS'
           echo 'AUDIO_FOCUS_UID_PARITY=UNVERIFIED'
-          echo 'SIGNED_APK=NOT_BUILT'
+          echo 'ANDROID_SOURCE_COMPILE=PASS: proceeding to isolated LAB packaging'
+      - name: Assemble separately installable LAB and verify package/ZIP/signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=aa-airpods-independent/aa-airpods-bridge-v01
+          gradle -p "$ROOT" :app:assembleLabDebug --no-daemon > "$RUNNER_TEMP/oneapp2/assemble.log" 2>&1 || {
+            echo '::error title=ISOLATED_LAB_ASSEMBLE_FAILED::No signed artifact from this run.'
+            grep -E -m 24 '(error:| FAILED|FAILURE:|What went wrong:)' "$RUNNER_TEMP/oneapp2/assemble.log" || true
+            exit 1
+          }
+          APK="$ROOT/app/build/outputs/apk/lab/debug/app-lab-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" > /dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/oneapp2/signature.txt"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' "$RUNNER_TEMP/oneapp2/signature.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > "$RUNNER_TEMP/oneapp2/badging.txt"
+          grep -Fq "package: name='com.aaairpods.oneapp.lab'" "$RUNNER_TEMP/oneapp2/badging.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml > "$RUNNER_TEMP/oneapp2/manifest.txt"
+          grep -Fq 'OneAppLabActivity' "$RUNNER_TEMP/oneapp2/manifest.txt"
+          if grep -Eq 'com[.]aaairpods[.]r25fix[.](verifiedupdates|controllermode)' "$RUNNER_TEMP/oneapp2/manifest.txt"; then
+            echo '::error title=LAB_AUTHORITY_COLLISION::Original Golden provider authority leaked into the separate LAB.'
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/oneapp2/output"
+          cp "$APK" "$RUNNER_TEMP/oneapp2/output/AA_OneApp2_PUBLIC_LAB_COMPILED_NOT_CAR_VERIFIED.apk"
+          sha256sum "$APK" | sed 's# .*$#  AA_OneApp2_PUBLIC_LAB_COMPILED_NOT_CAR_VERIFIED.apk#' > "$RUNNER_TEMP/oneapp2/output/SHA256SUMS.txt"
+          printf 'SOURCE_HEAD=%s\nPACKAGE=com.aaairpods.oneapp.lab\nSIGNER=LAB_DEBUG_OR_AUTHORIZED_EXISTING_SIGNER\nVEHICLE_AUDIO=UNVERIFIED\nEXTERNAL_GENERIC_FOCUS=UNVERIFIED\nGOLDEN_CONTROL_NOT_ACCESSED=YES\n' "$GITHUB_SHA" > "$RUNNER_TEMP/oneapp2/output/BUILD_STATUS.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: AA_ONEAPP2_PUBLIC_COMPILED_LAB_NOT_FINAL
+          path: ${{ runner.temp }}/oneapp2/output/
+          retention-days: 7
