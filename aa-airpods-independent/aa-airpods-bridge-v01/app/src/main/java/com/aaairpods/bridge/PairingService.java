@@ -170,11 +170,11 @@ public class PairingService extends Service {
             try { manager.disconnect(); } catch (Throwable ignored) {}
             statusText =
                     "APK 내부 ADB 페어링 성공 / 새 연결 준비\n" + id +
-                    "\n\n페어링/연결 완료. 앱으로 돌아가 2번 R25.1.9c FIX 시작을 누르세요.";
+                    "\n\n페어링/연결 완료. 통합본으로 돌아가 ② 통합본 전용 데몬 시작을 선택하세요.";
 
             notifyNow(buildDoneNotification(
                     "ADB 연결 완료",
-                    "앱으로 돌아가 2번 R25.1.9c FIX 시작을 누르세요."
+                    "통합본으로 돌아가 ② 통합본 전용 데몬 시작을 선택하세요."
             ));
 
             running = false;
@@ -266,7 +266,7 @@ public class PairingService extends Service {
 
     private Notification buildProgressNotification(String text) {
         return baseBuilder()
-                .setContentTitle("AA R25 Fix · 내부 ADB")
+                .setContentTitle("AA AirPods 통합본 · 내부 ADB")
                 .setContentText(text)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
