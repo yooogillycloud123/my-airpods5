@@ -99,6 +99,10 @@ public final class OneApp2IndependentCycleEngine {
 
     public synchronized Result vehicleEvidence(long generation,
                  OneApp2UniversalController.Evidence proof) {
+        // A delayed vehicle callback must never promote a stale restore after
+        // a newer AirPods request, even if the previous vehicle had sounded.
+        // This preserves the Golden no-reconnect and new-intent-wins rule.
+        if(generation!=route.generation())return Result.STALE;
         if(stage!=Stage.VEHICLE_PENDING)return Result.BLOCKED;
         OneApp2RepeatFocusPlanner.Action a=focus.vehicleEvidence(
             generation,proof);
