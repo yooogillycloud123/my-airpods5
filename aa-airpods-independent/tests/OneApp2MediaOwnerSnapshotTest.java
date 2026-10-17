@@ -34,6 +34,12 @@ public final class OneApp2MediaOwnerSnapshotTest {
         bad("com.demo.app|1|1|1|1|AA_REMOTE|1|9");
         bad("com.demo.app|1|1|1|1|AA_REMOTE|1|0\nmore");
         bad("none|none|none|none|none|NONE|1|0");
+        bad("none|none|none|999|none|NONE|0|0");
+        bad("none|none|none|none|9531|NONE|0|0");
+        bad("none|none|none|none|none|NONE|0|1");
+        check(!OneApp2MediaOwnerSnapshot.parse(
+            "none|none|none|none|none|NONE|0|0").isEligibleOrdinaryMedia(),
+            "original owner.sh canonical absent tuple is not a real player");
         System.out.println("ONEAPP2_MEDIA_OWNER_CONTRACT_CHECKS="+n);
         System.out.println("ONEAPP2_ACTUAL_MEDIA_DEVICE_AUDIO=NOT_TESTED");
     }
