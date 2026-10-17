@@ -114,10 +114,11 @@ public final class OneApp2RepeatFocusPlannerTest {
            OneApp2RepeatFocusPlanner.Action.STALE_CALLBACK,
            "old HU callback stale");
         eq(p.vehicleEvidence(11,evidence(9,true,true,false)),
-           OneApp2RepeatFocusPlanner.Action.RELEASE_ONLY_AFTER_VEHICLE_PASS,
-           "vehicle proof despite prior blocked AirPods");
+           OneApp2RepeatFocusPlanner.Action.VEHICLE_CONFIRMED_NO_OWNED_FOCUS,
+           "vehicle proof without this app's Focus MUST NOT release another UID");
         eq(p.verifiedVehicleCycles(),3,"no false additional cycle");
 
+        System.out.println("NO_UNOWNED_FOCUS_ABANDON=HOST_PASS");
         System.out.println("ONEAPP2_REPEAT_FOCUS_HOST_CHECKS="+checks);
         System.out.println("GENERIC_SECOND_CYCLE_PREARM_REARM=HOST_PASS");
         System.out.println("NO_FALSE_MANUAL_RESTORE_AND_NO_AA_RECONNECT=HOST_PASS");
