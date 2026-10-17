@@ -243,7 +243,7 @@ public class PairingService extends Service {
                 .setAllowGeneratedReplies(false)
                 .build();
 
-        Intent openApp = new Intent(this, R25FixActivity.class);
+        Intent openApp = new Intent(this, OneAppLabActivity.class);
         PendingIntent content = PendingIntent.getActivity(
                 this,
                 4603,
@@ -252,7 +252,7 @@ public class PairingService extends Service {
         );
 
         return baseBuilder()
-                .setContentTitle("AA R25 Fix · 페어링 대기")
+                .setContentTitle("AA AirPods 통합본 · 페어링 대기")
                 .setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(
                         "삼성 '페어링 코드로 기기 페어링' 창을 닫지 마세요. " +
