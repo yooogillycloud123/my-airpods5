@@ -1,0 +1,76 @@
+name: REA iOS Find My owner case portability evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/ios-findmy-rea-owner-session-port-20261017, main]
+    paths:
+      - 'ci/ios_findmy_owner_port/**'
+      - '.github/workflows/rea-ios-findmy-port-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  audited-ios-port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Download PINNED public reverse-engineering source symbols (NOT original Mach-O)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="$RUNNER_TEMP/FindMy-26.1-public-audit"
+          mkdir -p "$SRC"
+          BT="https://raw.githubusercontent.com/blacktop/ipsw-diffs/af456047befbab058df4c3d7c7094462ad4753d6/iOS/26_5_23F77_vs_27_0_24A5355q"
+          ET="https://raw.githubusercontent.com/EthanArbuckle/iPhone18-3_26.1_23B85_Restore/90aa0cfe59d9682b4265e1354c8b19ec3c7823ab"
+          curl --retry 3 -fsSL "$BT/MACHOS/filesystem/private/var/staged_system_apps/FindMy.app/FindMy.md" -o "$SRC/FindMy_symbols.md"
+          curl --retry 3 -fsSL "$BT/DYLIBS/System/Library/PrivateFrameworks/SPOwner.framework/SPOwner.md" -o "$SRC/SPOwner_symbols.md"
+          curl --retry 3 -fsSL "$BT/MACHOS/filesystem/usr/libexec/searchpartyd.md" -o "$SRC/searchpartyd_symbols.md"
+          curl --retry 3 -fsSL "$ET/System/Library/PrivateFrameworks/SPOwner.framework/SPOwner/SPOwnerSession.mm" -o "$SRC/SPOwnerSession.mm"
+          curl --retry 3 -fsSL "$ET/System/Library/PrivateFrameworks/SPOwner.framework/SPOwner/SPBTFindingSession.mm" -o "$SRC/SPBTFindingSession.mm"
+          curl --retry 3 -fsSL "$ET/System/Library/PrivateFrameworks/SPOwner.framework/SPOwner/SPAccessoryDiscoveryAndPairingSession.mm" -o "$SRC/SPAccessoryDiscoveryAndPairingSession.mm"
+          printf 'APPLE_PUBLIC_SOURCE_COUNT='
+          find "$SRC" -type f | wc -l
+          echo "APPLE_PUBLIC_SOURCE_DIR=$SRC" >> "$GITHUB_ENV"
+      - name: Real public iOS native symbol/ObjC wrapper facts (source boundaries)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/ios_findmy_owner_port/audit_apple_findmy.py \
+             --sources "$APPLE_PUBLIC_SOURCE_DIR" \
+             --output dist/REA_Apple_FindMy_26_Source_Port_PROOF.json
+          python3 -m json.tool dist/REA_Apple_FindMy_26_Source_Port_PROOF.json >/dev/null
+      - name: Run pinned OFFICIAL REA source graph (not Ghidra/Mach-O analysis)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ps -p $$
+          npm install --global rea-agents@6.5.0 --no-audit --no-fund
+          rea --version
+          # This is source-reference import, NOT decompilation of Apple's raw binary.
+          rea import-reference-source "$APPLE_PUBLIC_SOURCE_DIR" \
+             --detail summary --json > "$RUNNER_TEMP/rea_ios_reference_source_graph.json"
+          python3 -m json.tool "$RUNNER_TEMP/rea_ios_reference_source_graph.json" >/dev/null
+          echo "REA_IOS_PUBLIC_REFERENCE_SOURCE_IMPORT=PASS"
+          echo "REAL_APPLE_FINDMY_MACHO_GHIDRA=NOT_PERFORMED"
+      - name: Compile and run ACTUAL Android-compatible owner session gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ios-port-classes"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/ios-port-classes" \
+            ci/ios_findmy_owner_port/android/CaseRingPort.java \
+            ci/ios_findmy_owner_port/android/CaseRingPortTest.java
+          java -ea -cp "$RUNNER_TEMP/ios-port-classes" com.myairpods5.casering.core.CaseRingPortTest
+      - name: Publish allowlisted source facts ONLY (no private keys, decompiled text or Apple binary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: REA_Apple_FindMy_Android_Owner_Port_Evidence
+          path: dist/REA_Apple_FindMy_26_Source_Port_PROOF.json
+          retention-days: 7
