@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/juhyeon-airpods5-final-korean.yml'
       - 'ci/build_juhyeon_final_ko_v2.py'
+      - 'ci/audit_juhyeon_v2_rea.py'
 permissions:
   contents: write
 jobs:
@@ -98,6 +99,42 @@ jobs:
           cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
           printf '주현에어팟5 Korean FOSS app v2.0.0\nCore: LibrePods AACP BLE/ATT, ANC modes, battery/popup/widget preserved.\nPlay billing/account/donation UI removed; no case speaker FindMy LAB.\nActual phone functionality requires Galaxy hardware testing.\nIMPORTANT: Existing installed com.myairpods5.personal v1.0.10 signer may differ.\nDo NOT uninstall original app until ready to accept local data loss.\nPreserve all pairing/other LAB and AA Golden.\nGPL-3.0-or-later LICENSE included.\n' > dist/READ_FIRST_KO.txt
           echo 'JUHYEON_PERSONAL_V2_SIGNED_APK_STATIC_PASS'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: REA 6.5 + verified JADX 0.7.1 static audit of actual Korean personal APK
+        shell: bash
+        env:
+          REA_JADX_HEAP_MIB: '2048'
+          REA_JADX_ACTIVE_PROCESSOR_COUNT: '2'
+          REA_JADX_EXPECTED_SHA256: 6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75
+        run: |
+          set -euo pipefail
+          ps -p $
+          npm install --global rea-agents@6.5.0 --no-audit --no-fund
+          rea --version
+          mkdir -p "$RUNNER_TEMP/rea-jadx"
+          curl --retry 3 --fail --location --silent --show-error \
+            https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar \
+            --output "$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar"
+          echo "$REA_JADX_EXPECTED_SHA256  $RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" | sha256sum -c -
+          echo "REA_JADX_MCP_JAR=$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" >> "$GITHUB_ENV"
+          APK=dist/Juhyeon_AirPods5_v2.0.0_Korean_Personal.apk
+          EXPECTED="$(cut -d' ' -f1 dist/SHA256.txt)"
+          python3 ci/audit_juhyeon_v2_rea.py --apk "$APK" --expected-sha256 "$EXPECTED" --out dist/REA_KOREAN_PERSONAL_V200_STATIC_PASS.json
+          python3 -m json.tool dist/REA_KOREAN_PERSONAL_V200_STATIC_PASS.json >/dev/null
+      - name: Bundle corresponding GPL personal Android source for reproducible builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd input/app_source
+          zip -9 -q -r ../../dist/Juhyeon_AirPods5_v2.0.0_GPL_SOURCE.zip . \
+            -x '*/build/*' '*/.gradle/*' '*/.idea/*' '*/.kotlin/*' \
+               '*local.properties' '*/.cxx/*' '*/.DS_Store'
+          cd ../..
+          unzip -t dist/Juhyeon_AirPods5_v2.0.0_GPL_SOURCE.zip | tail -1
+          sha256sum dist/Juhyeon_AirPods5_v2.0.0_GPL_SOURCE.zip | tee dist/SOURCE_SHA256.txt
+          echo 'GPL_CORRESPONDING_SOURCE_BUNDLED=PASS'
       - uses: actions/upload-artifact@v4
         with:
           name: Juhyeon_AirPods5_v200_KO_Personal
