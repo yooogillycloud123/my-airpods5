@@ -23,10 +23,12 @@ jobs:
         run: |
           set -euo pipefail
           SRC=aa-airpods-independent/source
+          ANDROID_SRC=aa-airpods-independent/aa-airpods-bridge-v01/app/src/main/java/com/aaairpods/bridge
           TEST=aa-airpods-independent/tests
+          cmp "$SRC/OneApp2GoldenMechanics.java" "$ANDROID_SRC/OneApp2GoldenMechanics.java"
           mkdir -p "$RUNNER_TEMP/aa-oneapp2-public/classes" "$RUNNER_TEMP/aa-oneapp2-public/stub/com/aaairpods/bridge"
           javac --release 17 -d "$RUNNER_TEMP/aa-oneapp2-public/classes" \
-            "$SRC/OneApp2GoldenMechanics.java" \
+            "$ANDROID_SRC/OneApp2GoldenMechanics.java" \
             "$SRC/OneApp2UniversalController.java" \
             "$SRC/OneApp2MediaOwnerSnapshot.java" \
             "$SRC/OneApp2RepeatFocusPlanner.java" \
