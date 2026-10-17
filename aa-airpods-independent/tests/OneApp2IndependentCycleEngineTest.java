@@ -134,6 +134,21 @@ public final class OneApp2IndependentCycleEngineTest {
             "Focus cycles not incremented by lost-Focus physical disconnect");
         System.out.println("PHYSICAL_DISCONNECT_NO_FOCUS_DEADLOCK=HOST_PASS");
         System.out.println("MANUAL_VEHICLE_OVERRIDES_PENDING_AIRPODS=HOST_PASS");
+        // The driver returned to AirPods (8th entry). An old vehicle
+        // success callback from the previous generation must be stale,
+        // never a reason to restore or reconnect Android Auto again.
+        long eighth=engine.airpodsIntent(netflix,on,true,true,true);
+        check(eighth>seventhCar,"eighth AirPods request after physical return");
+        eq(engine.vehicleEvidence(seventhCar,vehicleProof(8)),
+            OneApp2IndependentCycleEngine.Result.STALE,
+            "superseded vehicle callback cannot undo AirPods reentry");
+        eq(engine.stage(),
+            OneApp2IndependentCycleEngine.Stage.AIRPODS_PENDING,
+            "late vehicle callback cannot mutate current AirPods state");
+        eq(engine.confirmAirpodsFocus(eighth,netflix,true,on,true,true,true),
+            OneApp2IndependentCycleEngine.Result.FOCUS_ARMED,
+            "eighth AirPods Focus still arms after old vehicle callback");
+        System.out.println("STALE_VEHICLE_CALLBACK_NO_AA_RECONNECT=HOST_PASS");
         System.out.println("ONEAPP2_INDEPENDENT_CYCLE_HOST_ASSERTIONS="+checks);
         System.out.println("REPEAT_3_CYCLES_APP_SWITCH_FOCUS_REARM=HOST_PASS");
         System.out.println("ACTUAL_EXTERNAL_AUDIO_POLICY=NOT_TESTED");
