@@ -1,0 +1,112 @@
+name: 주현에어팟5 v2.0.0 최종 한국어 개인용 앱
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/juhyeon-airpods5-final-korean-personal-v2-20261017
+    paths:
+      - '.github/workflows/juhyeon-airpods5-final-korean.yml'
+      - 'ci/build_juhyeon_final_ko_v2.py'
+permissions:
+  contents: write
+jobs:
+  build-personal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify precise original LibrePods GPL source and create frozen hash baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=My_AirPods5_Clean_Standalone_Korean_SourceBuild_20261014-2.zip
+          echo "0403d20dcc83ae02a974d69b1340e5686ac408b43f77e341e2068fe9991829da  $FILE" | sha256sum -c -
+          unzip -t "$FILE" | tail -1
+          unzip -q "$FILE" -d input
+          test -s input/app_source/LICENSE
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          cp "$SRC/MainActivity.kt" input/PRISTINE_MainActivity.kt
+          find "$SRC/bluetooth" "$SRC/services" "$SRC/data" "$SRC/receivers" -type f -name '*.kt' ! -name 'AirPodsService.kt' -print0 | sort -z | xargs -0 sha256sum > input/PRISTINE_ENGINE_SHA256.txt
+          test -s input/PRISTINE_ENGINE_SHA256.txt
+      - name: Restore v1.0.10 known-good service/activity/video fixes WITHOUT case LABs
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          python3 ci/repair_korean_onboarding_and_service.py input/app_source
+          cp input/PRISTINE_MainActivity.kt "$SRC/MainActivity.kt"
+          python3 ci/repair_personal_ui_v106.py input/app_source
+          python3 ci/repair_personal_activity_v107.py input/app_source
+          python3 ci/repair_personal_oneear_v108.py input/app_source
+          python3 ci/add_personal_diagnostics_v109.py input/app_source
+          python3 ci/fix_evidenced_videoview_badtoken_v110.py input/app_source
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          grep -F 'versionCode = 10010' input/app_source/android/app/build.gradle.kts
+      - name: Build Korean 개인용 free-only UI; remove payment/account/sponsor system
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ci/build_juhyeon_final_ko_v2.py input/app_source
+          python3 -m py_compile ci/build_juhyeon_final_ko_v2.py
+          sha256sum -c input/PRISTINE_ENGINE_SHA256.txt
+          SRC=input/app_source/android/app/src/main/java/me/kavishdevar/librepods
+          grep -F 'versionCode = 20000' input/app_source/android/app/build.gradle.kts
+          grep -F 'applicationId = "com.myairpods5.personal"' input/app_source/android/app/build.gradle.kts
+          grep -F 'MutableStateFlow(true)' "$SRC/billing/FOSSBillingProvider.kt"
+          ! grep -R --include='*.kt' -E 'sponsors/kavishdevar|billing@kavish.xyz|BillingClient' "$SRC/billing" "$SRC/presentation/screens/AppSettingsScreen.kt" "$SRC/presentation/screens/AirPodsSettingsScreen.kt"
+          ! grep -F 'implementation(libs.billing)' input/app_source/android/app/build.gradle.kts
+          test ! -e "$SRC/billing/PlayBillingProvider.kt"
+          test ! -e "$SRC/CaseRadioEvidenceV138.kt"
+          grep -F "context.packageName" "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          grep -F 'setOnErrorListener' "$SRC/presentation/overlays/PopupWindow.kt" "$SRC/presentation/overlays/IslandWindow.kt"
+          echo 'ORIGINAL_AACP_BLE_ATT_SERVICE_FROZEN_AND_CRASH_FIX_INCLUDED=PASS'
+          echo 'PERSONAL_KOREAN_FREE_FEATURE_NO_ACCOUNT_NO_PAY=PASS'
+      - name: Install Android 36 SDK / NDK28 and compile standalone one-app
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358' 'cmake;3.22.1'
+          echo "sdk.dir=$ANDROID_HOME" > input/app_source/android/local.properties
+          cd input/app_source/android
+          chmod +x gradlew
+          ./gradlew :app:assembleFossDebug -x :app:checkFossDebugAarMetadata --no-daemon --console=plain --max-workers=2
+      - name: Validate actual signed APK, package and class inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK=dist/Juhyeon_AirPods5_v2.0.0_Korean_Personal.apk
+          cp input/app_source/android/app/build/outputs/apk/foss/debug/app-foss-debug.apk "$APK"
+          unzip -t "$APK" | tail -1
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package:' | tee dist/PACKAGE.txt
+          grep -F "name='com.myairpods5.personal'" dist/PACKAGE.txt
+          grep -F "versionCode='20000'" dist/PACKAGE.txt
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'AirPodsService' >/dev/null
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'FOSSBillingProvider' >/dev/null
+          unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'AirPodsCrashDiary' >/dev/null
+          ! unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'PlayBillingProvider' >/dev/null
+          ! unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseRfCorrelationV143' >/dev/null
+          ! unzip -p "$APK" 'classes*.dex' | LC_ALL=C grep -aF 'CaseSoundTrialV140' >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee dist/SIGNATURE.txt
+          sha256sum "$APK" | tee dist/SHA256.txt
+          cp input/app_source/LICENSE dist/GPL_LICENSE.txt
+          cp input/PRISTINE_ENGINE_SHA256.txt dist/PRISTINE_ENGINE_SHA256.txt
+          printf '주현에어팟5 Korean FOSS app v2.0.0\nCore: LibrePods AACP BLE/ATT, ANC modes, battery/popup/widget preserved.\nPlay billing/account/donation UI removed; no case speaker FindMy LAB.\nActual phone functionality requires Galaxy hardware testing.\nIMPORTANT: Existing installed com.myairpods5.personal v1.0.10 signer may differ.\nDo NOT uninstall original app until ready to accept local data loss.\nPreserve all pairing/other LAB and AA Golden.\nGPL-3.0-or-later LICENSE included.\n' > dist/READ_FIRST_KO.txt
+          echo 'JUHYEON_PERSONAL_V2_SIGNED_APK_STATIC_PASS'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Juhyeon_AirPods5_v200_KO_Personal
+          path: dist/*
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="juhyeon-airpods5-v2.0.0-ko-r${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" dist/* --title "주현에어팟5 v2.0.0 | 개인용 한국어 FOSS 앱" --notes "Known v1.0.10 original LibrePods engine/service activity and crash fixes preserved, no experimental find-case-sound feature. Korean personal app name, popup/widget/battery/ANC UI preserved as hardware-supported. Removed sponsorship/account/payment UI and Google Play billing dependency; open-source GPL copyright/license retained. IMPORTANT: CI-generated APK uses a new debug signer and MAY NOT update over installed older com.myairpods5.personal versions. Do NOT delete any installed app/pairings casually. Physical Galaxy S26 Ultra AirPods5 actual function test required; GitHub Actions static PASS does not establish physical PASS." --prerelease
