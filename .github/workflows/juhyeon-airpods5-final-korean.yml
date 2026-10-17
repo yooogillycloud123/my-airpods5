@@ -110,7 +110,7 @@ jobs:
           REA_JADX_EXPECTED_SHA256: 6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75
         run: |
           set -euo pipefail
-          ps -p $
+          command -v ps >/dev/null
           npm install --global rea-agents@6.5.0 --no-audit --no-fund
           rea --version
           mkdir -p "$RUNNER_TEMP/rea-jadx"
@@ -118,7 +118,7 @@ jobs:
             https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar \
             --output "$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar"
           echo "$REA_JADX_EXPECTED_SHA256  $RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" | sha256sum -c -
-          echo "REA_JADX_MCP_JAR=$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar" >> "$GITHUB_ENV"
+          export REA_JADX_MCP_JAR="$RUNNER_TEMP/rea-jadx/jadx-headless-mcp-0.7.1-all.jar"
           APK=dist/Juhyeon_AirPods5_v2.0.0_Korean_Personal.apk
           EXPECTED="$(cut -d' ' -f1 dist/SHA256.txt)"
           python3 ci/audit_juhyeon_v2_rea.py --apk "$APK" --expected-sha256 "$EXPECTED" --out dist/REA_KOREAN_PERSONAL_V200_STATIC_PASS.json
