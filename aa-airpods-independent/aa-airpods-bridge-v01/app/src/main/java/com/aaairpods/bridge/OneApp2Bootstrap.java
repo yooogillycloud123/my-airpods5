@@ -41,13 +41,13 @@ public final class OneApp2Bootstrap {
             LocalAdbConnectionManager.getInstance(app);
         if(!manager.isConnected() && !manager.autoConnect(app,7000))
             return "ONEAPP2_PAIRING_REQUIRED_IN_THIS_APP\nWIRELESS_DEBUGGING_NEEDED_FOR_FIRST_START";
-        String identity=DaemonBootstrap.runShell(manager,"id");
+        String identity=OneApp2AdbShell.runShell(manager,"id");
         if(!identity.contains("uid=2000"))
             return "ONEAPP2_BOOTSTRAP_NOT_SHELL_UID2000";
         String path=app.getApplicationInfo().sourceDir;
         String staged=OneApp2Identity.STAGED_DAEMON_APK;
-        String quote=DaemonBootstrap.shellQuote(path),dst=DaemonBootstrap.shellQuote(staged);
-        String copy=DaemonBootstrap.runShell(manager,
+        String quote=OneApp2AdbShell.quote(path),dst=OneApp2AdbShell.quote(staged);
+        String copy=OneApp2AdbShell.runShell(manager,
             "cp "+quote+" "+dst+
             " && chmod 0644 "+dst+
             " && test -r "+dst+" && echo ONEAPP2_STAGING_SUCCESS");
@@ -58,10 +58,10 @@ public final class OneApp2Bootstrap {
         String cmd="( CLASSPATH="+dst+
             " /system/bin/app_process /system/bin "+
             "com.aaairpods.bridge.OneApp2IndependentDaemon "+
-            OneApp2Identity.PORT+" "+DaemonBootstrap.shellQuote(own)+
+            OneApp2Identity.PORT+" "+OneApp2AdbShell.quote(own)+
             " </dev/null >>/data/local/tmp/aaairpods_oneapp2_route.log 2>&1 & )"+
             " && echo ONEAPP2_START_REQUESTED";
-        String launched=DaemonBootstrap.runShell(manager,cmd);
+        String launched=OneApp2AdbShell.runShell(manager,cmd);
         if(!launched.contains("ONEAPP2_START_REQUESTED"))
             return "ONEAPP2_START_NOT_CONFIRMED";
         for(int attempts=0;attempts<16;attempts++){
