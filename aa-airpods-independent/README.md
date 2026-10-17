@@ -1,3 +1,11 @@
+## 2026-10-17 transfer checkpoint
+- The PRIVATE repo's own GitHub-hosted Actions failed before steps due to GitHub account billing/spending restriction, confirmed in user screenshot; it was **NOT** an Android compiler failure.
+- All new AA development is being migrated under **PUBLIC** repository `my-airpods5/aa-airpods-independent/` without overwriting the unrelated AirPods5 companion app.
+- ACTUALLY migrated: public Gradle build files; AndroidManifest files, native build and res; OneApp2 source-only route/daemon/bootstrap/self-heal/Focus state, and read-only host tests. Source is copied into independent subfolders; some classes are not yet migrated, so not a buildable complete Android tree. Existing free public host workflow `aa-oneapp2-public-source-host.yml` has **PASS** run `38985783001` using no private repository, no PAT and no signing key.
+- GitHub connector safety blocked the public-copy operations specifically for `OneApp2LiveOutputObserver.java`, `OneApp2UniversalController.java` at the Android source path, and `InternalEdgeFocusSpec.java`. The second file is separately present in `source/` for host tests, but Android source-tree migration of it was not approved. No attempt was made to work around denied operations.
+- This migration **does not yet** provide a self-contained APK or 2nd+ physically proven simultaneous playback. The preexisting public signing pipeline `build-aa-golden-capsule.yml` at its pinned older source produced genuine signed independent LAB Build16 (`38979582461`), but that build still read signed original source from PRIVATE and is not proof of a self-contained public-source build.
+- Security boundary: NEVER copy original keystore/PAT/auth token/pairing state from PRIVATE into PUBLIC. The final signed channel must obtain original signing material through GitHub Secrets or an existing narrowly scoped authenticated channel, while Android app source and tests reside publicly.
+
 # AA AirPods — standalone public-source migration
 
 This directory is dedicated to the separate Android Auto / AirPods independent integrated-app project. It is NOT the My AirPods 5 battery-popup application.
