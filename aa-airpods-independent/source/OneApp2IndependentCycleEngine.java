@@ -46,6 +46,8 @@ public final class OneApp2IndependentCycleEngine {
             long generation,OneApp2MediaOwnerSnapshot media,
             boolean externalPolicy,OneApp2GoldenMechanics.Mode mode,
             boolean bypass,boolean directA2dp,boolean connected) {
+        if(generation!=route.generation())
+            return Result.STALE; // superseded by a newer explicit user request
         if(stage!=Stage.AIRPODS_PENDING&&stage!=Stage.AIRPODS_POLICY_ARMED)
             return Result.BLOCKED;
         OneApp2RepeatFocusPlanner.Action a=focus.focusObserved(
@@ -74,7 +76,12 @@ public final class OneApp2IndependentCycleEngine {
     }
 
     public synchronized long vehicleIntent(boolean physicalDisconnect) {
-        if(stage!=Stage.AIRPODS_POLICY_ARMED)return -1;
+        // A manual vehicle request must cancel even a PENDING AirPods route.
+        // Otherwise a late first Focus callback can turn AirPods back on
+        // after the driver already selected basic vehicle output.
+        if(stage!=Stage.AIRPODS_POLICY_ARMED
+            && !(stage==Stage.AIRPODS_PENDING && !physicalDisconnect))
+            return -1;
         OneApp2UniversalController.Trigger trigger=physicalDisconnect
              ? OneApp2UniversalController.Trigger.PHYSICAL_DISCONNECT
              : OneApp2UniversalController.Trigger.USER;
