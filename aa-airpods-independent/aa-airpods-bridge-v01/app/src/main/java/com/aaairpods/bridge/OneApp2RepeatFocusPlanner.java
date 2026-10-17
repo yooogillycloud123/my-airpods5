@@ -23,6 +23,9 @@ public final class OneApp2RepeatFocusPlanner {
     private Phase phase=Phase.IDLE;
     private String ownerKey;
     private boolean priorAirpodsConfirmed;
+    // Remember earlier accepted Focus in THIS AirPods route generation.
+    // A later Focus drop must not disable physical disconnect recovery.
+    private boolean airpodsWasEverConfirmedInCycle;
     private int verifiedVehicleCycles;
 
     private static String key(OneApp2MediaOwnerSnapshot s) {
@@ -37,6 +40,7 @@ public final class OneApp2RepeatFocusPlanner {
         if(nextGeneration<=generation) return Action.STALE_CALLBACK;
         generation=nextGeneration;
         priorAirpodsConfirmed=false;
+        airpodsWasEverConfirmedInCycle=false;
         ownerKey=key(owner);
         if(!connected || ownerKey==null ||
                 !OneApp2GoldenMechanics.positiveAirpodsIntent(mode,bypass,directA2dp)) {
@@ -78,6 +82,7 @@ public final class OneApp2RepeatFocusPlanner {
         }
         phase=Phase.AIRPODS_FOCUS_READY;
         priorAirpodsConfirmed=true;
+        airpodsWasEverConfirmedInCycle=true;
         return Action.FOCUS_CONFIRMED;
     }
 
@@ -100,7 +105,7 @@ public final class OneApp2RepeatFocusPlanner {
                                                  RestoreCause cause) {
         if(nextGeneration<=generation) return Action.STALE_CALLBACK;
         if(cause==null) return Action.BLOCKED;
-        if(cause==RestoreCause.PHYSICAL_DISCONNECT && !priorAirpodsConfirmed)
+        if(cause==RestoreCause.PHYSICAL_DISCONNECT && !airpodsWasEverConfirmedInCycle)
             return Action.BLOCKED;
         generation=nextGeneration;
         // Do not release Focus based solely on Basic Output intent.
@@ -124,6 +129,7 @@ public final class OneApp2RepeatFocusPlanner {
         boolean releaseOwnedFocus=priorAirpodsConfirmed;
         if(releaseOwnedFocus) verifiedVehicleCycles++;
         priorAirpodsConfirmed=false;
+        airpodsWasEverConfirmedInCycle=false;
         ownerKey=null;
         phase=Phase.VEHICLE_CONFIRMED;
         return releaseOwnedFocus ? Action.RELEASE_ONLY_AFTER_VEHICLE_PASS
