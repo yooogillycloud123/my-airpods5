@@ -35,7 +35,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           w=Path(".github/workflows/build-aa-golden-capsule.yml").read_text()
-          assert "AA_EXPECTED_SOURCE_SHA: '0b93e94d0128775dc3a989797cae9d8897d6c4ad'" in w
+          assert "AA_EXPECTED_SOURCE_SHA: 'b35576a2b03ab73e7a1da04c8bfafc0090e18cfb'" in w
           assert "AA_ORIGINAL_SIGNING_SOURCE_SHA: '9ae4b5bf1472f28681f08c597ce50161d0176134'" in w
           assert "secrets.AA_PRIVATE_SOURCE_PAT" in w
           assert "secrets.AA_SIGN_" not in w
