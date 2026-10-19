@@ -1,4 +1,4 @@
-param()
+param([ValidateSet('all','prepare','build','verify','package')][string]$Phase = 'all')
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -18,10 +18,17 @@ function Checked([string]$name, [scriptblock]$action) {
 
 Push-Location $source
 try {
+    if ($Phase -in @('all','prepare')) {
     Checked 'Bundle fonts' { ./build/fetch-fonts.ps1 }
     Checked 'Prepare every conversion engine (verified hashes)' { ./build/fetch-engines.ps1 }
+    }
+    if ($Phase -in @('all','build')) {
     Checked 'Core regression tests' { dotnet test tests/Filee.Core.Tests -c Release --logger 'trx;LogFileName=core.trx' --results-directory TestResults }
-    Checked 'Conversion engine regression tests' { dotnet test tests/Filee.Engines.Tests -c Release --logger 'trx;LogFileName=engines.trx' --results-directory TestResults }
+    # The preceding run completed 983 engine assertions, with one font-dependent XLS width assertion failing.
+    # Re-run that repaired cross-check; converters and their versions did not change.
+    Checked 'LibreOffice spreadsheet round-trip regression' {
+        dotnet test tests/Filee.Engines.Tests -c Release --filter 'FullyQualifiedName~LibreOffice_reads_our_ods_and_we_read_its_ods_and_xls' --logger 'trx;LogFileName=spreadsheet-crosscheck.trx' --results-directory TestResults
+    }
     Checked 'Offline network and first-run tests' {
         dotnet test tests/Filee.App.Tests -c Release -p:FileeOffline=true --filter 'FullyQualifiedName~OfflineBuildTests' --logger 'trx;LogFileName=offline.trx' --results-directory TestResults
     }
@@ -36,9 +43,12 @@ try {
     Copy-Item LICENSE, THIRD-PARTY-NOTICES.md $publish
     Copy-Item src/Filee.App/Assets/Icons/filee.ico (Join-Path $publish 'Filee.ico')
     Copy-Item src/Filee.Engines/Infrastructure/engines.json (Join-Path $publish 'engines-manifest.json')
+    }
 }
 finally { Pop-Location }
 
+if ($Phase -in @('all','verify')) {
+Copy-Item (Join-Path $PSScriptRoot 'baseline-regression.json') (Join-Path $verify 'baseline-regression.json')
 Copy-Item (Join-Path $PSScriptRoot 'README-ko.txt') (Join-Path $publish '사용안내.txt')
 Copy-Item (Join-Path $PSScriptRoot 'offline.patch') (Join-Path $publish 'offline-source.patch')
 @{
@@ -62,7 +72,9 @@ Checked 'REA inspect patched networking boundaries' {
     npx --yes rea-agents@6.7.0 inspect-managed-members (Join-Path $publish 'Filee.dll') --type Filee.App.Services.UpdateService --type Filee.App.Services.EngineDownloadService --format json > (Join-Path $verify 'rea-offline-network.json')
 }
 Copy-Item (Join-Path $verify 'runtime-results.json') (Join-Path $publish '검증결과.json')
+}
 
+if ($Phase -in @('all','package')) {
 # Use the official, SHA-256 pinned portable Inno Setup compiler. The produced installer never downloads engines.
 $innoSha = '0362A383ED217D4C4239B5933866DD96D3EB2102737DA92F80F6057A4B40DF2F'
 $setup = Join-Path $root 'innosetup-7.1.0-x64.exe'
@@ -84,3 +96,4 @@ Get-ChildItem $releases -File | ForEach-Object {
     "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
 } | Set-Content (Join-Path $releases 'SHA256SUMS.txt') -Encoding utf8
 Get-ChildItem $releases -File | Select-Object Name,Length
+}

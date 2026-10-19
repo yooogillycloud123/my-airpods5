@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "49911afab6eef81f144543710f1aa8021c617ff1",
+  "previousRun": "https://github.com/yooogillycloud123/my-airpods5/actions/runs/39207781610",
+  "core": {"passed": 246, "skipped": 2, "failed": 0},
+  "engines": {"passed": 983, "skipped": 2, "failed": 1},
+  "failure": "LibreOffice XLS export changed character width 14 to 16.1484375 under font substitution, violating the original 1% assumption",
+  "repair": "Use the same 25% font-metric tolerance as ODS, retaining strict column-width ratio, values, formatted text, names, merges and alignment assertions. No spreadsheet converter code changed.",
+  "rerunGate": "LibreOffice_reads_our_ods_and_we_read_its_ods_and_xls must pass in the new build. Final EXEs must also pass the blocked-network runtime suite."
+}

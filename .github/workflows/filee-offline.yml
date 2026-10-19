@@ -34,7 +34,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
+        id: engine-cache
         with:
           path: |
             upstream/build/.cache
@@ -49,9 +50,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Test fixture dependencies failed' }
           python filee-offline/make-fixtures.py filee-offline/fixtures.zip
           if ($LASTEXITCODE -ne 0) { throw 'Test fixture generation failed' }
-      - name: Build and verify offline distribution
+      - name: Prepare and verify all bundled engines
         shell: pwsh
-        run: ./filee-offline/build.ps1
+        run: ./filee-offline/build.ps1 -Phase prepare
+      - name: Save pinned engine downloads
+        if: steps.engine-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            upstream/build/.cache
+            upstream/engines
+            upstream/src/Filee.App/Assets/Fonts
+            ~/.nuget/packages
+          key: filee-offline-1.12.0-win-v1
+      - name: Compile, test and publish Windows executables
+        shell: pwsh
+        run: ./filee-offline/build.ps1 -Phase build
+      - name: Block network and verify actual conversions, then inspect with REA
+        shell: pwsh
+        run: ./filee-offline/build.ps1 -Phase verify
+      - name: Package the verified offline EXE
+        shell: pwsh
+        run: ./filee-offline/build.ps1 -Phase package
       - name: Upload diagnostics
         if: always()
         uses: actions/upload-artifact@v4

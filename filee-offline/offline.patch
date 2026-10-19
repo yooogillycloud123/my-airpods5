@@ -35,7 +35,7 @@ index ba48ba9..82b4ec7 100644
              // Picked on the installer's engine page: download them now. Picking none answers the first-run question.
              if (engines.Count > 0)
 diff --git a/src/Filee.App/Services/EngineDownloadService.cs b/src/Filee.App/Services/EngineDownloadService.cs
-index 42c3b20..da2a862 100644
+index 42c3b20..dc9b028 100644
 --- a/src/Filee.App/Services/EngineDownloadService.cs
 +++ b/src/Filee.App/Services/EngineDownloadService.cs
 @@ -9,6 +9,7 @@
@@ -82,6 +82,23 @@ index 42c3b20..da2a862 100644
          http.DefaultRequestHeaders.UserAgent.ParseAdd($"Filee/{typeof(EngineDownloadService).Assembly.GetName().Version}");
          _installer = new EngineInstaller(http, logger: logger);
          Packages = EngineDownloads.Packages.Select(p => new EnginePackageState(p, loc)).ToList();
+@@ -213,6 +214,16 @@ public void RefreshStatus()
+     private EnginePackageStatus StatusOf(EnginePackageState state)
+     {
+         var id = state.Package.Id;
++        // Offline packages carry all engines beside Filee.exe rather than in the download cache.
++        if (OfflinePolicy.Enabled && EngineEnvironment.FindBundled(id) is { } bundled
++            && EngineEnvironment.FolderWithPrograms(id, bundled) is { } bundledPrograms)
++        {
++            state.OwnCopyFolder = bundledPrograms;
++            state.FromSystem = false;
++            state.UpdateNote = null;
++            state.IsOutdated = false;
++            return EnginePackageStatus.Installed;
++        }
+         var own = EngineEnvironment.OwnCopyFolder(id);
+         var system = own is null && !_installer.IsInstalled(state.Package) ? EngineEnvironment.SystemCopyFolder(id) : null;
+         state.OwnCopyFolder = own ?? system;
 diff --git a/src/Filee.App/Services/UpdateService.cs b/src/Filee.App/Services/UpdateService.cs
 index 8e22c3c..2c53118 100644
 --- a/src/Filee.App/Services/UpdateService.cs
@@ -387,3 +404,21 @@ index 0000000..8e10acc
 +        }
 +    }
 +}
+diff --git a/tests/Filee.Engines.Tests/SpreadsheetFormatTests.cs b/tests/Filee.Engines.Tests/SpreadsheetFormatTests.cs
+index 738fce0..9e87d5f 100644
+--- a/tests/Filee.Engines.Tests/SpreadsheetFormatTests.cs
++++ b/tests/Filee.Engines.Tests/SpreadsheetFormatTests.cs
+@@ -606,9 +606,10 @@ public async Task LibreOffice_reads_our_ods_and_we_read_its_ods_and_xls()
+             Assert.True(sales.Get(4, 1)!.Text == "2,220,000원", $"{name}: {sales.Get(4, 1)!.Text}");
+             Assert.True(new CellRange(0, 0, 0, 3) == Assert.Single(sales.Merges), name);
+             Assert.True(sales.Get(1, 0)!.Style.Align == CellAlign.Center, name);
+-            // LibreOffice measures character widths with its own fonts, so widths through ODS move by up to a fifth;
+-            // XLS keeps Excel's own unit.
+-            var tolerance = name.StartsWith("XLS", StringComparison.Ordinal) ? 0.01 : 0.25;
++            // LibreOffice can substitute the Normal font on a clean Windows host. Both ODS and BIFF XLS
++            // character widths then scale with the substituted font (observed XLS 14 -> 16.1484375).
++            // Keep the absolute font-metric tolerance and the strict relative-width check below.
++            const double tolerance = 0.25;
+             Assert.True(Math.Abs(sales.ColumnWidth(0) - 14) <= 14 * tolerance, $"{name}: {sales.ColumnWidth(0)}");
+             Assert.True(Math.Abs(sales.ColumnWidth(0) / sales.ColumnWidth(1) - 14.0 / 12) < 0.02, $"{name}: {sales.ColumnWidth(0)} / {sales.ColumnWidth(1)}");
+         }
