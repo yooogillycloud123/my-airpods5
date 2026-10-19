@@ -10,6 +10,7 @@ New-Item -ItemType Directory -Force $verify, $publish, $releases | Out-Null
 
 function Checked([string]$name, [scriptblock]$action) {
     Write-Host "::group::$name"
+    $global:LASTEXITCODE = 0
     & $action
     if ($LASTEXITCODE -ne 0) { throw "$name failed ($LASTEXITCODE)" }
     Write-Host '::endgroup::'
