@@ -8,7 +8,7 @@ on:
       source_ref:
         description: 'Approved private-source commit SHA (must match the pinned revision)'
         required: true
-        default: '542b854e2b3dbffcffa863dda41296d6d902cc00'
+        default: '4b405aaa00584feaaee74a0460091618061992fb'
         type: string
 permissions:
   contents: read
@@ -16,7 +16,7 @@ concurrency:
   group: aa-golden-original-signer
   cancel-in-progress: false
 env:
-  AA_EXPECTED_SOURCE_SHA: '542b854e2b3dbffcffa863dda41296d6d902cc00'
+  AA_EXPECTED_SOURCE_SHA: '4b405aaa00584feaaee74a0460091618061992fb'
   AA_ORIGINAL_SIGNING_SOURCE_SHA: '9ae4b5bf1472f28681f08c597ce50161d0176134'
   AA_EXPECTED_SIGNER_SHA256: 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23'
 jobs:
@@ -223,7 +223,7 @@ jobs:
           grep -Fqi 'be9ec29b5384912c2c75c283615ccc78ee17f694133375e087e8df08319e4f23' "$RUNNER_TEMP/apk-signer.txt"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
           grep -Fq "package: name='com.aaairpods.r25fix'" "$RUNNER_TEMP/badging.txt"
-          grep -Fq "versionCode='26081'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='26082'" "$RUNNER_TEMP/badging.txt"
           if ! python3 qa/golden_capsule_verify_apk.py "$APK" > "$RUNNER_TEMP/aa-private-apk-check.log" 2>&1; then
             echo "::error title=APK_INTEGRITY_FAILED::Golden integrity audit failed."
             exit 49
@@ -244,7 +244,7 @@ jobs:
           grep -Fqi "$AA_EXPECTED_SIGNER_SHA256" "$RUNNER_TEMP/aa-private-lab-sign-check.log"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$LAB" > "$RUNNER_TEMP/aa-private-lab-badging.log"
           grep -Fq "package: name='com.aaairpods.oneapp.lab'" "$RUNNER_TEMP/aa-private-lab-badging.log"
-          grep -Fq "versionCode='26081'" "$RUNNER_TEMP/aa-private-lab-badging.log"
+          grep -Fq "versionCode='26082'" "$RUNNER_TEMP/aa-private-lab-badging.log"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$LAB" AndroidManifest.xml > "$RUNNER_TEMP/aa-private-lab-manifest.log"
           grep -Fq 'OneAppLabActivity' "$RUNNER_TEMP/aa-private-lab-manifest.log"
           if grep -Eq 'com[.]aaairpods[.]r25fix[.](verifiedupdates|controllermode)' "$RUNNER_TEMP/aa-private-lab-manifest.log"; then
@@ -395,19 +395,19 @@ jobs:
           grep -Fqi "$AA_EXPECTED_SIGNER_SHA256" "$RUNNER_TEMP/lab-cert.txt"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$LAB" > "$RUNNER_TEMP/lab-badging.txt"
           grep -Fq "package: name='com.aaairpods.oneapp.lab'" "$RUNNER_TEMP/lab-badging.txt"
-          grep -Fq "versionCode='26081'" "$RUNNER_TEMP/lab-badging.txt"
+          grep -Fq "versionCode='26082'" "$RUNNER_TEMP/lab-badging.txt"
           python3 qa/golden_capsule_verify_apk.py "$LAB" > "$RUNNER_TEMP/lab-integrity.txt"
           mkdir -p dist
-          cp "$LAB" dist/AA_OneApp2_gbr4_v26081_SIGNED_LAB_DIAGNOSTIC_NOT_FINAL.apk
+          cp "$LAB" dist/AA_OneApp2_gbr4_v26082_NATIVE_EVIDENCE_GUARD_LAB_NOT_FINAL.apk
           sha256sum dist/*.apk > dist/SHA256SUMS.txt
           printf 'SOURCE_SHA=%s\nPACKAGE=com.aaairpods.oneapp.lab\nBUILD=SIGNED_LAB_TEST_ONLY\nGOLDEN_RELEASE_PARITY=NOT_PASSED\nEDGE_UID_PARITY=UNVERIFIED\nCAR_AUDIBLE=NOT_TESTED\nGOLDEN_47651=UNTOUCHED\n' "$AA_EXPECTED_SOURCE_SHA" > dist/BUILD_STATUS.txt
           echo 'SIGNED_INDEPENDENT_LAB_TEST_ARTIFACT=PASS;RELEASE_NOT_AUTHORIZED'
       - name: Publish signed independent LAB diagnostic artifact only
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: AA_ONEAPP2_GBR4_V26081_SIGNED_LAB_DIAGNOSTIC_NOT_FINAL
+          name: AA_ONEAPP2_GBR4_V26082_NATIVE_EVIDENCE_GUARD_LAB_NOT_FINAL
           path: |
-            golden-src/dist/AA_OneApp2_gbr4_v26081_SIGNED_LAB_DIAGNOSTIC_NOT_FINAL.apk
+            golden-src/dist/AA_OneApp2_gbr4_v26082_NATIVE_EVIDENCE_GUARD_LAB_NOT_FINAL.apk
             golden-src/dist/SHA256SUMS.txt
             golden-src/dist/BUILD_STATUS.txt
           retention-days: 7
