@@ -63,9 +63,26 @@ jobs:
             upstream/src/Filee.App/Assets/Fonts
             ~/.nuget/packages
           key: filee-offline-1.12.0-win-v1
+      - name: Restore identical compiled Windows binaries
+        id: exe-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            publish/FileeOffline
+            upstream/TestResults
+          key: filee-offline-publish-v1-${{ hashFiles('filee-offline/offline.patch') }}
       - name: Compile, test and publish Windows executables
+        if: steps.exe-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: ./filee-offline/build.ps1 -Phase build
+      - name: Preserve compiled binaries for verification retries
+        if: steps.exe-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            publish/FileeOffline
+            upstream/TestResults
+          key: filee-offline-publish-v1-${{ hashFiles('filee-offline/offline.patch') }}
       - name: Block network and verify actual conversions, then inspect with REA
         shell: pwsh
         run: ./filee-offline/build.ps1 -Phase verify

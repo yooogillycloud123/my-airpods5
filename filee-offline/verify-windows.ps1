@@ -37,8 +37,10 @@ foreach ($name in 'Filee.exe', 'filee-cli.exe', 'coreclr.dll', 'hostfxr.dll', 'h
 function Run-Case([string]$id, [string]$source, [string]$target, [string]$extension = $target) {
     $out = Join-Path $work $id
     New-Item -ItemType Directory -Force -Path $out | Out-Null
-    $stdout = Join-Path $out 'stdout.json'
-    $stderr = Join-Path $out 'stderr.txt'
+    $logs = Join-Path $work 'process-logs'
+    New-Item -ItemType Directory -Force -Path $logs | Out-Null
+    $stdout = Join-Path $logs "$id.stdout.json"
+    $stderr = Join-Path $logs "$id.stderr.txt"
     $arguments = @('convert', "`"$(Join-Path $inputs $source)`"", '--to', $target, '--json', '-o', "`"$out`"")
     $clock = [Diagnostics.Stopwatch]::StartNew()
     $p = Start-Process (Join-Path $AppFolder 'filee-cli.exe') -ArgumentList $arguments -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WorkingDirectory $AppFolder
