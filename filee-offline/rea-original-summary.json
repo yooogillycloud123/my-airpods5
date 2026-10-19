@@ -1,0 +1,43 @@
+{
+  "tool": "rea-agents@6.7.0",
+  "target": "Original public Filee 1.12.0 Windows release Filee.dll",
+  "archive_sha256": "0396ee40cc4583264fbbb1d2c1643ddb79fccaed2c39be9f0f9afed1f8a977c9",
+  "evidence": [
+    {
+      "record": "app-artifact.json",
+      "evidence_id": "ev_22598dc34d2290844f0b79fdb0e8afe4dacafbaa04b73b5d1cdf3198eb6a1638",
+      "operation": "inspect_managed_artifact",
+      "artifact_sha256": "dba20b3dbacab3708ef88b52f917f8acb819048ecdac50c5d405c52285d3afc9",
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    },
+    {
+      "record": "network-members.json",
+      "evidence_id": "ev_599368cb6eedfcd6eeb17096e5036ecc978288e1c1928a316d58a4aa61d7f370",
+      "operation": "inspect_managed_members",
+      "artifact_sha256": "dba20b3dbacab3708ef88b52f917f8acb819048ecdac50c5d405c52285d3afc9",
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    },
+    {
+      "record": "async-network-members.json",
+      "evidence_id": "ev_1b153b9027a1a3b49d7a951d12621816e9f0e9597d9426f9aa27157b5100919d",
+      "operation": "inspect_managed_members",
+      "artifact_sha256": "dba20b3dbacab3708ef88b52f917f8acb819048ecdac50c5d405c52285d3afc9",
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    }
+  ],
+  "observed": [
+    "Managed .NET CIL and ReadyToRun assembly",
+    "UpdateService and EngineDownloadService construct HttpClient handlers",
+    "RefreshAsync state machine invokes HttpClient.GetAsync"
+  ],
+  "limitation": "Static evidence only; runtime verification is recorded separately"
+}

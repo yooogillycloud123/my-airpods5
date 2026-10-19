@@ -1,0 +1,71 @@
+name: Filee offline Windows build
+
+on:
+  push:
+    branches: [filee-offline]
+    paths: ['filee-offline/**', '.github/workflows/filee-offline.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain pinned upstream source
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch v1.12.0 https://github.com/KnifeLemon/Filee.git upstream
+          if ($LASTEXITCODE -ne 0) { throw 'Source clone failed' }
+          if ((git -C upstream rev-parse HEAD).Trim() -ne '49911afab6eef81f144543710f1aa8021c617ff1') { throw 'Unexpected upstream source commit' }
+          git -C upstream apply --check ../filee-offline/offline.patch
+          if ($LASTEXITCODE -ne 0) { throw 'Patch check failed' }
+          git -C upstream apply ../filee-offline/offline.patch
+          if ($LASTEXITCODE -ne 0) { throw 'Patch failed' }
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: upstream/global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate representative test inputs
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check pillow==11.3.0 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2
+          if ($LASTEXITCODE -ne 0) { throw 'Test fixture dependencies failed' }
+          python filee-offline/make-fixtures.py filee-offline/fixtures.zip
+          if ($LASTEXITCODE -ne 0) { throw 'Test fixture generation failed' }
+      - name: Build and verify offline distribution
+        shell: pwsh
+        run: ./filee-offline/build.ps1
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: filee-offline-verification
+          path: |
+            verification/
+            upstream/TestResults/
+          if-no-files-found: warn
+      - name: Upload Windows deliverables
+        uses: actions/upload-artifact@v4
+        with:
+          name: filee-offline-windows
+          path: Releases/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish the verified build
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "filee-offline-1.12.0-r${{ github.run_number }}"
+          gh release create $tag --target '${{ github.sha }}' --title 'Filee Offline 1.12.0' --prerelease --latest=false --notes-file filee-offline/release-notes.md (Get-ChildItem Releases -File | ForEach-Object FullName)
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

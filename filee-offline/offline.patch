@@ -1,0 +1,389 @@
+diff --git a/Directory.Build.props b/Directory.Build.props
+index 2e8c729..b543156 100644
+--- a/Directory.Build.props
++++ b/Directory.Build.props
+@@ -23,4 +23,9 @@
+     <FileeRepositoryUrl>https://github.com/KnifeLemon/Filee</FileeRepositoryUrl>
+     <RepositoryUrl>$(FileeRepositoryUrl)</RepositoryUrl>
+   </PropertyGroup>
++  <PropertyGroup Condition="'$(FileeOffline)' == 'true'">
++    <DefineConstants>$(DefineConstants);FILEE_OFFLINE</DefineConstants>
++    <InformationalVersion>1.12.0-offline.1</InformationalVersion>
++    <Product>Filee Offline</Product>
++  </PropertyGroup>
+ </Project>
+diff --git a/src/Filee.App/App.axaml.cs b/src/Filee.App/App.axaml.cs
+index ba48ba9..82b4ec7 100644
+--- a/src/Filee.App/App.axaml.cs
++++ b/src/Filee.App/App.axaml.cs
+@@ -165,6 +165,8 @@ private void ListenForLaterLaunches(SingleInstance instance, ILogger log)
+     /// </summary>
+     private static void WatchForUpdates(UserDataStore store)
+     {
++        if (OfflinePolicy.Enabled)
++            return;
+         var updates = AppHost.Get<UpdateService>();
+         // Required: the card every time Filee starts (UpdateFound fires once per run). Recommended: once per version.
+         // Optional: no card, the sidebar button only. Frequent releases no longer ask every day.
+@@ -261,7 +263,7 @@ private void HandleCommandLine(CommandLine options, bool firstLaunch = false, bo
+         if (!options.Background || options.ShowSettings || !firstLaunch)
+             AppHost.Get<WindowService>().ShowMain(store.Settings.FirstRunCompleted ? null : "home");
+ 
+-        if (options.InstallEngines is { } engines)
++        if (!OfflinePolicy.Enabled && options.InstallEngines is { } engines)
+         {
+             // Picked on the installer's engine page: download them now. Picking none answers the first-run question.
+             if (engines.Count > 0)
+diff --git a/src/Filee.App/Services/EngineDownloadService.cs b/src/Filee.App/Services/EngineDownloadService.cs
+index 42c3b20..da2a862 100644
+--- a/src/Filee.App/Services/EngineDownloadService.cs
++++ b/src/Filee.App/Services/EngineDownloadService.cs
+@@ -9,6 +9,7 @@
+ using Filee.Engines.Infrastructure;
+ using Filee.Engines.Office;
+ using Microsoft.Extensions.Logging;
++using Filee.Core.Settings;
+ 
+ namespace Filee.App.Services;
+ 
+@@ -80,7 +81,7 @@ public string? InstallGuidance
+     public string? Version => EngineDownloads.Components.TryGetValue(Package.Components[0], out var component) ? component.Version : null;
+ 
+     /// <summary>Filee's download is installed in an older version than the one Filee downloads now.</summary>
+-    public bool CanUpdate => Status == EnginePackageStatus.Installed && IsOutdated && EngineDownloads.CanDownload(Package);
++    public bool CanUpdate => !OfflinePolicy.Enabled && Status == EnginePackageStatus.Installed && IsOutdated && EngineDownloads.CanDownload(Package);
+ 
+     /// <summary>Folder of the copy in use while the status is <see cref="EnginePackageStatus.OwnCopy"/>.</summary>
+     [ObservableProperty]
+@@ -114,7 +115,7 @@ public string? InstallGuidance
+ 
+     /// <summary>The engine is there: Filee's download or the user's own copy.</summary>
+     public bool IsInstalled => Status is EnginePackageStatus.Installed or EnginePackageStatus.OwnCopy;
+-    public bool CanRemove => Status == EnginePackageStatus.Installed;
++    public bool CanRemove => !OfflinePolicy.Enabled && Status == EnginePackageStatus.Installed;
+     /// <summary>The user chose this copy ("Stop using it" applies).</summary>
+     public bool UsesOwnCopy => Status == EnginePackageStatus.OwnCopy && !FromSystem;
+     public bool ShowsCopyFolder => Status == EnginePackageStatus.OwnCopy;
+@@ -122,7 +123,7 @@ public string? InstallGuidance
+                                  || (Status == EnginePackageStatus.OwnCopy && FromSystem);
+     public bool IsBusy => Status is EnginePackageStatus.Queued or EnginePackageStatus.Downloading or EnginePackageStatus.Unpacking;
+     /// <summary>Also when a copy on the PC is used: Filee's download is the tested version and wins once installed.</summary>
+-    public bool CanInstall => EngineDownloads.CanDownload(Package) && (Status is EnginePackageStatus.NotInstalled or EnginePackageStatus.Failed
++    public bool CanInstall => !OfflinePolicy.Enabled && EngineDownloads.CanDownload(Package) && (Status is EnginePackageStatus.NotInstalled or EnginePackageStatus.Failed
+                               || (Status == EnginePackageStatus.OwnCopy && FromSystem));
+ 
+     public string StatusText => Status switch
+@@ -185,7 +186,7 @@ public EngineDownloadService(ConverterCatalog catalog, ILocalizer loc, ILogger<E
+         _logger = logger;
+         _loc = loc;
+         // Redirects are followed by the installer (mirrors may use plain HTTP; files are verified by SHA-256).
+-        var http = new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }) { Timeout = Timeout.InfiniteTimeSpan };
++        var http = new HttpClient(OfflinePolicy.Guard(new SocketsHttpHandler { AllowAutoRedirect = false })) { Timeout = Timeout.InfiniteTimeSpan };
+         http.DefaultRequestHeaders.UserAgent.ParseAdd($"Filee/{typeof(EngineDownloadService).Assembly.GetName().Version}");
+         _installer = new EngineInstaller(http, logger: logger);
+         Packages = EngineDownloads.Packages.Select(p => new EnginePackageState(p, loc)).ToList();
+diff --git a/src/Filee.App/Services/UpdateService.cs b/src/Filee.App/Services/UpdateService.cs
+index 8e22c3c..2c53118 100644
+--- a/src/Filee.App/Services/UpdateService.cs
++++ b/src/Filee.App/Services/UpdateService.cs
+@@ -12,6 +12,7 @@
+ using Avalonia.Threading;
+ using CommunityToolkit.Mvvm.ComponentModel;
+ using Microsoft.Extensions.Logging;
++using Filee.Core.Settings;
+ 
+ namespace Filee.App.Services;
+ 
+@@ -60,7 +61,7 @@ internal UpdateService(ILogger<UpdateService> log, HttpMessageHandler handler)
+     {
+         _log = log;
+         // Downloads use their own stall timeout (StallTimeout); this one covers the API call and the response headers.
+-        _http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
++        _http = new HttpClient(OfflinePolicy.Guard(handler)) { Timeout = TimeSpan.FromSeconds(20) };
+         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Filee", CurrentVersion));
+         _http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+     }
+@@ -146,6 +147,8 @@ internal UpdateService(ILogger<UpdateService> log, HttpMessageHandler handler)
+     /// </summary>
+     internal async Task<bool> RefreshAsync(bool announce, CancellationToken cancellationToken = default)
+     {
++        if (OfflinePolicy.Enabled)
++            return false;
+         try
+         {
+             var api = RepositoryUrl.TrimEnd('/').Replace("https://github.com/", "https://api.github.com/repos/", StringComparison.OrdinalIgnoreCase)
+@@ -219,6 +222,8 @@ await Dispatcher.UIThread.InvokeAsync(() =>
+     /// <summary>Checks shortly after start and then every few hours while <paramref name="enabled"/> says so.</summary>
+     public void StartPeriodicChecks(Func<bool> enabled, TimeSpan firstDelay)
+     {
++        if (OfflinePolicy.Enabled)
++            return;
+         if (_timer is not null)
+             return;
+         _timer = new DispatcherTimer { Interval = firstDelay };
+@@ -237,6 +242,8 @@ public void StartPeriodicChecks(Func<bool> enabled, TimeSpan firstDelay)
+     /// </summary>
+     public async Task UpdateAsync()
+     {
++        if (OfflinePolicy.Enabled)
++            return;
+         if (IsBusy)
+             return;
+         if (!InstallsItself)
+diff --git a/src/Filee.App/ViewModels/Pages/AboutPageViewModel.cs b/src/Filee.App/ViewModels/Pages/AboutPageViewModel.cs
+index 22a84c4..714fa85 100644
+--- a/src/Filee.App/ViewModels/Pages/AboutPageViewModel.cs
++++ b/src/Filee.App/ViewModels/Pages/AboutPageViewModel.cs
+@@ -11,6 +11,7 @@ namespace Filee.App.ViewModels.Pages;
+ 
+ public sealed partial class AboutPageViewModel : ObservableObject, IDisposable
+ {
++    public bool NetworkEnabled => !OfflinePolicy.Enabled;
+     private readonly ILocalizer _loc;
+     private readonly UserDataStore _store;
+     private readonly UpdateService _updates;
+diff --git a/src/Filee.App/Views/MainWindow.axaml b/src/Filee.App/Views/MainWindow.axaml
+index aaeb24a..68009fb 100644
+--- a/src/Filee.App/Views/MainWindow.axaml
++++ b/src/Filee.App/Views/MainWindow.axaml
+@@ -4,7 +4,7 @@
+         xmlns:vm="using:Filee.App.ViewModels"
+         x:Class="Filee.App.Views.MainWindow"
+         x:DataType="vm:MainWindowViewModel"
+-        Title="Filee"
++        Title="Filee Offline"
+         Icon="avares://Filee/Assets/Icons/filee.ico"
+         Width="1080" Height="760" MinWidth="820" MinHeight="560"
+         WindowStartupLocation="CenterScreen">
+diff --git a/src/Filee.App/Views/Pages/AboutPage.axaml b/src/Filee.App/Views/Pages/AboutPage.axaml
+index 138e267..37e3258 100644
+--- a/src/Filee.App/Views/Pages/AboutPage.axaml
++++ b/src/Filee.App/Views/Pages/AboutPage.axaml
+@@ -33,9 +33,9 @@
+     <Border Classes="card">
+       <StackPanel Spacing="12">
+         <TextBlock Classes="h2" Text="{DynamicResource about.updates}" />
+-        <ToggleSwitch Content="{DynamicResource general.check_updates}" IsChecked="{Binding CheckForUpdates}" />
++        <ToggleSwitch Content="{DynamicResource general.check_updates}" IsChecked="{Binding CheckForUpdates}" IsEnabled="{Binding NetworkEnabled}" />
+         <WrapPanel>
+-          <Button Content="{DynamicResource general.check_now}" Command="{Binding CheckNowCommand}" Margin="0,0,10,0" />
++          <Button Content="{DynamicResource general.check_now}" Command="{Binding CheckNowCommand}" IsEnabled="{Binding NetworkEnabled}" Margin="0,0,10,0" />
+           <Button Classes="accent" Command="{Binding DownloadUpdateCommand}" IsVisible="{Binding UpdateAvailable}" Margin="0,0,10,0">
+             <StackPanel Orientation="Horizontal" Spacing="6">
+               <PathIcon Width="13" Height="13" Data="{StaticResource Icon.Download}" />
+diff --git a/src/Filee.Core/Settings/AppSettings.cs b/src/Filee.Core/Settings/AppSettings.cs
+index f1fde54..6ec27a5 100644
+--- a/src/Filee.Core/Settings/AppSettings.cs
++++ b/src/Filee.Core/Settings/AppSettings.cs
+@@ -69,14 +69,14 @@ public sealed class AppSettings
+     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+ 
+     /// <summary><c>"auto"</c>, <c>"en"</c>, <c>"ko"</c> or <c>"zh-CN"</c>.</summary>
+-    public string Language { get; set; } = "auto";
++    public string Language { get; set; } = OfflinePolicy.Enabled ? "ko" : "auto";
+ 
+-    public bool StartWithSystem { get; set; } = true;
++    public bool StartWithSystem { get; set; } = !OfflinePolicy.Enabled;
+ 
+     /// <summary>Show the Explorer "Convert with Filee" context menu entry.</summary>
+-    public bool ContextMenuEnabled { get; set; } = true;
++    public bool ContextMenuEnabled { get; set; } = !OfflinePolicy.Enabled;
+ 
+-    public bool CheckForUpdates { get; set; } = true;
++    public bool CheckForUpdates { get; set; } = !OfflinePolicy.Enabled;
+ 
+     /// <summary>What closing the main window does. A value from a newer Filee reads as <see cref="CloseAction.Ask"/>.</summary>
+     [JsonConverter(typeof(LenientEnumJsonConverter<CloseAction>))]
+@@ -112,7 +112,7 @@ public sealed class AppSettings
+     ];
+ 
+     /// <summary>Set once the first-run welcome has been shown.</summary>
+-    public bool FirstRunCompleted { get; set; }
++    public bool FirstRunCompleted { get; set; } = OfflinePolicy.Enabled;
+ 
+     /// <summary>Conversions that succeeded completely, counted until the feedback card has been shown.</summary>
+     public int SuccessfulConversions { get; set; }
+diff --git a/src/Filee.Core/Settings/OfflinePolicy.cs b/src/Filee.Core/Settings/OfflinePolicy.cs
+new file mode 100644
+index 0000000..4c96289
+--- /dev/null
++++ b/src/Filee.Core/Settings/OfflinePolicy.cs
+@@ -0,0 +1,45 @@
++using System.Net;
++
++namespace Filee.Core.Settings;
++
++/// <summary>Compile-time offline distribution policy. Settings cannot enable networking in this build.</summary>
++public static class OfflinePolicy
++{
++#if FILEE_OFFLINE
++    public static bool Enabled => true;
++#else
++    public static bool Enabled => false;
++#endif
++
++    public static string DataFolderName => Enabled ? "FileeOffline" : "Filee";
++
++    public static void Apply(AppSettings settings)
++    {
++        if (!Enabled)
++            return;
++        settings.CheckForUpdates = false;
++        settings.FirstRunCompleted = true;
++        settings.FeedbackPromptShown = true;
++        if (settings.Language == "auto")
++            settings.Language = "ko";
++    }
++
++    /// <summary>No socket-capable handler is retained in an offline distribution.</summary>
++    public static HttpMessageHandler Guard(HttpMessageHandler onlineHandler)
++    {
++        if (!Enabled)
++            return onlineHandler;
++        onlineHandler.Dispose();
++        return new OfflineHandler();
++    }
++
++    private sealed class OfflineHandler : HttpMessageHandler
++    {
++        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
++            Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
++            {
++                RequestMessage = request,
++                Content = new StringContent("오프라인 전용 버전입니다. 필요한 엔진은 배포 파일에 포함되어 있습니다."),
++            });
++    }
++}
+diff --git a/src/Filee.Core/Settings/UserDataStore.cs b/src/Filee.Core/Settings/UserDataStore.cs
+index 44dd6d2..abe182c 100644
+--- a/src/Filee.Core/Settings/UserDataStore.cs
++++ b/src/Filee.Core/Settings/UserDataStore.cs
+@@ -41,7 +41,7 @@ public UserDataStore(string directory, ILogger<UserDataStore>? log = null)
+     /// folder in <see cref="DirectoryVariable"/>.
+     /// </summary>
+     public static string DefaultDirectory =>
+-        OverrideDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Filee");
++        OverrideDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), OfflinePolicy.DataFolderName);
+ 
+     internal static string? DirectoryFrom(string? value) =>
+         string.IsNullOrWhiteSpace(value) ? null : Path.TrimEndingDirectorySeparator(Path.GetFullPath(value.Trim()));
+@@ -72,6 +72,7 @@ public void Load()
+     {
+         System.IO.Directory.CreateDirectory(Directory);
+         Settings = Read(SettingsPath, FileeJsonContext.Default.AppSettings) ?? new AppSettings();
++        OfflinePolicy.Apply(Settings);
+         Presets = Read(PresetsPath, FileeJsonContext.Default.ListPreset) ?? BuiltInData.CreatePresets();
+         Profiles = Read(ProfilesPath, FileeJsonContext.Default.ListToolbarProfile) ?? BuiltInData.CreateProfiles();
+         History = Read(HistoryPath, FileeJsonContext.Default.ListHistoryEntry) ?? [];
+diff --git a/src/Filee.Engines/Infrastructure/EngineEnvironment.cs b/src/Filee.Engines/Infrastructure/EngineEnvironment.cs
+index a94979e..43a8c6b 100644
+--- a/src/Filee.Engines/Infrastructure/EngineEnvironment.cs
++++ b/src/Filee.Engines/Infrastructure/EngineEnvironment.cs
+@@ -27,7 +27,7 @@ public sealed class EngineEnvironment(string dataDirectory)
+     internal static string DefaultDownloadRoot(string? dataDirectoryOverride) =>
+         dataDirectoryOverride is not null
+             ? Path.Combine(dataDirectoryOverride, "engines")
+-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Filee", "engines");
++            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), OfflinePolicy.DataFolderName, "engines");
+ 
+     /// <summary>
+     /// Finds an engine directory (<c>engines/&lt;name&gt;</c>): next to the executable (bundled with the installer),
+diff --git a/src/Filee.Engines/Infrastructure/EngineInstaller.cs b/src/Filee.Engines/Infrastructure/EngineInstaller.cs
+index b09f654..db3369a 100644
+--- a/src/Filee.Engines/Infrastructure/EngineInstaller.cs
++++ b/src/Filee.Engines/Infrastructure/EngineInstaller.cs
+@@ -17,6 +17,7 @@
+ using Microsoft.Extensions.Logging.Abstractions;
+ using SharpCompress.Compressors.Xz;
+ using SharpCompress.Compressors.ZStandard;
++using Filee.Core.Settings;
+ 
+ namespace Filee.Engines.Infrastructure;
+ 
+@@ -63,6 +64,8 @@ public bool IsUpToDate(EnginePackage package) =>
+     /// <summary>Downloads and unpacks the components that are missing or outdated.</summary>
+     public async Task InstallAsync(EnginePackage package, IProgress<EngineInstallProgress>? progress, CancellationToken cancellationToken)
+     {
++        if (OfflinePolicy.Enabled)
++            throw new InvalidOperationException("오프라인 전용 버전에서는 엔진을 다운로드하지 않습니다. 배포 파일의 engines 폴더를 확인하세요.");
+         if (package.Components.Any(c => !_components.ContainsKey(c)))
+             throw new PlatformNotSupportedException(EngineDownloads.UnavailableReason(package)
+                 ?? $"The {package.Id} package is unavailable on this platform.");
+diff --git a/tests/Filee.App.Tests/OfflineBuildTests.cs b/tests/Filee.App.Tests/OfflineBuildTests.cs
+new file mode 100644
+index 0000000..8e10acc
+--- /dev/null
++++ b/tests/Filee.App.Tests/OfflineBuildTests.cs
+@@ -0,0 +1,72 @@
++using System.Net;
++using System.Text.Json;
++using Filee.App.Services;
++using Filee.Core.Settings;
++using Microsoft.Extensions.Logging.Abstractions;
++
++namespace Filee.App.Tests;
++
++public sealed class OfflineBuildTests
++{
++    [Fact]
++    public void Compiled_distribution_has_offline_defaults()
++    {
++        Assert.True(OfflinePolicy.Enabled);
++        var settings = new AppSettings();
++        Assert.False(settings.CheckForUpdates);
++        Assert.True(settings.FirstRunCompleted);
++        Assert.Equal("ko", settings.Language);
++        Assert.False(settings.StartWithSystem);
++        Assert.Equal("FileeOffline", OfflinePolicy.DataFolderName);
++    }
++
++    [Fact]
++    public void Loading_settings_cannot_reenable_online_startup()
++    {
++        var folder = Path.Combine(Path.GetTempPath(), "FileeOffline-test-" + Guid.NewGuid());
++        Directory.CreateDirectory(folder);
++        try
++        {
++            File.WriteAllText(Path.Combine(folder, "settings.json"),
++                "{\"schemaVersion\":20,\"checkForUpdates\":true,\"firstRunCompleted\":false,\"language\":\"auto\"}");
++            var store = new UserDataStore(folder);
++            store.Load();
++            Assert.False(store.Settings.CheckForUpdates);
++            Assert.True(store.Settings.FirstRunCompleted);
++            Assert.Equal("ko", store.Settings.Language);
++        }
++        finally { Directory.Delete(folder, recursive: true); }
++    }
++
++    [Fact]
++    public async Task Manual_and_periodic_update_paths_never_invoke_a_network_handler()
++    {
++        var handler = new CountingHandler();
++        var updates = new UpdateService(NullLogger<UpdateService>.Instance, handler);
++        Assert.Null(await updates.CheckAsync(TestContext.Current.CancellationToken));
++        await updates.UpdateAsync();
++        updates.StartPeriodicChecks(() => true, TimeSpan.Zero);
++        Assert.False(updates.IsUpdateAvailable);
++        Assert.Equal(0, handler.Requests);
++    }
++
++    [Fact]
++    public async Task Guard_blocks_even_accidental_direct_HttpClient_calls()
++    {
++        var handler = new CountingHandler();
++        using var http = new HttpClient(OfflinePolicy.Guard(handler));
++        using var reply = await http.GetAsync("https://example.invalid/", TestContext.Current.CancellationToken);
++        Assert.Equal(HttpStatusCode.ServiceUnavailable, reply.StatusCode);
++        Assert.Equal(0, handler.Requests);
++    }
++
++    private sealed class CountingHandler : HttpMessageHandler
++    {
++        public int Requests { get; private set; }
++        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
++        {
++            Requests++;
++            throw new InvalidOperationException("Offline build reached the online handler.");
++        }
++    }
++}
