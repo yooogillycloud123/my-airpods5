@@ -63,14 +63,12 @@ jobs:
           $v = $LASTEXITCODE
           & rea doctor --json *> evidence/rea-doctor.log
           $d = $LASTEXITCODE
-          & rea inspect-pe-imports analysis-target/JMemo_Personal.exe --json *> evidence/pe-imports.log
-          $i = $LASTEXITCODE
-          & rea inspect-pe-certificates analysis-target/JMemo_Personal.exe --json *> evidence/pe-certificates.log
-          $c = $LASTEXITCODE
-          "version=$v doctor=$d imports=$i certificates=$c" | Tee-Object -FilePath evidence/exit-codes.txt
+          & rea inspect-pe-resources analysis-target/JMemo_Personal.exe --json *> evidence/pe-resources.log
+          $r = $LASTEXITCODE
+          "version=$v doctor=$d resources=$r" | Tee-Object -FilePath evidence/exit-codes.txt
           Get-Content evidence/rea-version.log | Select-Object -First 12
-          Get-Content evidence/pe-imports.log | Select-Object -First 18
-          Get-Content evidence/pe-certificates.log | Select-Object -First 18
+          Get-Content evidence/pe-resources.log | Select-Object -First 32
+          $global:LASTEXITCODE = 0
       - uses: actions/upload-artifact@v4
         with:
           name: JMemo_REA_Static_Analysis
@@ -81,6 +79,6 @@ jobs:
         shell: pwsh
         run: |
           $s = Get-Content evidence/exit-codes.txt -Raw
-          if ($s -notmatch "version=0" -or $s -notmatch "imports=0" -or $s -notmatch "certificates=0") {
+          if ($s -notmatch "version=0" -or $s -notmatch "resources=0") {
             throw "REA PE audit failed. Read JMemo_REA_Static_Analysis logs; no REA PASS claim."
           }
