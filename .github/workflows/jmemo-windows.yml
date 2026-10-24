@@ -52,18 +52,35 @@ jobs:
           node-version: '22.20.0'
       - name: Install REA CLI for static PE audit
         run: npm install --global rea-agents@6.5.0
-      - name: REA Windows EXE static evidence
+      - name: REA Windows EXE static evidence (capture exact failures)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force evidence | Out-Null
-          rea --version | Out-File -Encoding UTF8 evidence/rea-version.txt
-          rea inspect-pe-imports analysis-target/JMemo_Personal.exe --json | Out-File -Encoding UTF8 evidence/pe-imports.json
-          rea inspect-pe-certificates analysis-target/JMemo_Personal.exe --json | Out-File -Encoding UTF8 evidence/pe-certificates.json
           $hash = (Get-FileHash analysis-target/JMemo_Personal.exe -Algorithm SHA256).Hash
           "target_sha256=$hash" | Out-File -Encoding UTF8 evidence/artifact-identity.txt
+          $ErrorActionPreference = "Continue"
+          & rea --version *> evidence/rea-version.log
+          $v = $LASTEXITCODE
+          & rea doctor --json *> evidence/rea-doctor.log
+          $d = $LASTEXITCODE
+          & rea inspect-pe-imports analysis-target/JMemo_Personal.exe --json *> evidence/pe-imports.log
+          $i = $LASTEXITCODE
+          & rea inspect-pe-certificates analysis-target/JMemo_Personal.exe --json *> evidence/pe-certificates.log
+          $c = $LASTEXITCODE
+          "version=$v doctor=$d imports=$i certificates=$c" | Tee-Object -FilePath evidence/exit-codes.txt
+          Get-Content evidence/rea-version.log | Select-Object -First 12
+          Get-Content evidence/pe-imports.log | Select-Object -First 18
+          Get-Content evidence/pe-certificates.log | Select-Object -First 18
       - uses: actions/upload-artifact@v4
         with:
           name: JMemo_REA_Static_Analysis
           path: evidence/
           if-no-files-found: error
           retention-days: 7
+      - name: Enforce actual REA result
+        shell: pwsh
+        run: |
+          $s = Get-Content evidence/exit-codes.txt -Raw
+          if ($s -notmatch "version=0" -or $s -notmatch "imports=0" -or $s -notmatch "certificates=0") {
+            throw "REA PE audit failed. Read JMemo_REA_Static_Analysis logs; no REA PASS claim."
+          }
