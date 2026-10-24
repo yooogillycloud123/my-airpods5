@@ -26,8 +26,7 @@ if (!(Get-Command rea -ErrorAction SilentlyContinue)) {
 }
 rea --version | Out-File -Encoding UTF8 (Join-Path $OutDir "rea-version.txt")
 rea doctor --json | Out-File -Encoding UTF8 (Join-Path $OutDir "doctor.json")
-rea inspect-pe-imports $source --json | Out-File -Encoding UTF8 (Join-Path $OutDir "pe-imports.json")
-rea inspect-pe-certificates $source --json | Out-File -Encoding UTF8 (Join-Path $OutDir "pe-certificates.json")
+rea inspect-pe-resources $source --json | Out-File -Encoding UTF8 (Join-Path $OutDir "pe-resources.json")
 # Native Ghidra decompile REQUIRES installed Ghidra 12.1.x + JDK21 on Windows.
 # Don't turn this into installer execution, and don't pretend importer success means main-app analysis.
 if ($env:GHIDRA_INSTALL_DIR) {
