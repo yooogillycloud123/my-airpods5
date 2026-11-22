@@ -1,0 +1,44 @@
+name: AA OneApp v26085-v26086 signing diagnostic (no device changes)
+on:
+  push:
+    branches: [aa-oneapp-v26086-guided-ux-download-20261122]
+    paths:
+      - '.github/workflows/aa-oneapp-v26086-signature-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  compare-official-signers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify both public APKs and prove signer compatibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/apks
+          gh release download aa-oneapp-v26085-independent-preview-test-only-20261122 -R yooogillycloud123/my-airpods5 -p '*.apk' -D /tmp/apks
+          gh release download aa-oneapp-v26086-guided-ui-test-20261122 -R yooogillycloud123/my-airpods5 -p '*.apk' -D /tmp/apks
+          mapfile -t tools < <(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V)
+          test "${#tools[@]}" -gt 0
+          signer="${tools[-1]}"
+          p85=/tmp/apks/AA_ONEAPP2_INDEPENDENT_PREVIEW_v26085_TEST_ONLY.apk
+          p86=/tmp/apks/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk
+          "$signer" verify --verbose --print-certs "$p85" >/tmp/85.txt
+          "$signer" verify --verbose --print-certs "$p86" >/tmp/86.txt
+          grep -F 'Verified using v2 scheme (APK Signature Scheme v2): true' /tmp/85.txt
+          grep -F 'Verified using v2 scheme (APK Signature Scheme v2): true' /tmp/86.txt
+          sha85="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/85.txt | head -1)"
+          sha86="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/86.txt | head -1)"
+          test -n "$sha85"
+          test -n "$sha86"
+          echo "V26085_CERT_SHA256=$sha85"
+          echo "V26086_CERT_SHA256=$sha86"
+          if [ "$sha85" = "$sha86" ]; then
+            echo 'UPDATE_SIGNER_COMPATIBILITY=SAME_CERT'; exit 2
+          else
+            echo 'UPDATE_SIGNER_COMPATIBILITY=DIFFERENT_CERT'
+            echo 'ANDROID_IN_PLACE_UPDATE_FROM_V26085_TO_V26086=BLOCKED_BY_SIGNER'
+          fi
+          echo 'Both APK certificates and v2 signatures independently valid; no Android device state changed.'
