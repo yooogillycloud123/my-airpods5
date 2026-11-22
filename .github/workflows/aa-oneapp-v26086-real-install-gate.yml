@@ -1,0 +1,59 @@
+name: Diagnose AA OneApp v26086 Android install and v26085 signer collision
+on:
+  push:
+    branches: [aa-oneapp-v26086-guided-ux-download-20261122]
+    paths:
+      - '.github/workflows/aa-oneapp-v26086-real-install-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-35-install-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve exact public signed APK binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/aa
+          gh release download aa-oneapp-v26085-independent-preview-test-only-20261122 -R yooogillycloud123/my-airpods5 -p '*.apk' -D /tmp/aa
+          gh release download aa-oneapp-v26086-guided-ui-test-20261122 -R yooogillycloud123/my-airpods5 -p '*.apk' -D /tmp/aa
+          ls -lh /tmp/aa/*.apk
+          sha256sum /tmp/aa/*.apk
+          echo '558eb31a5df6ac2a9c3a2ef985da0394e5613559e9ee5db11fcf0cca2a5734bb  /tmp/aa/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk' | sha256sum -c -
+      - name: Install on clean Android, reproduce update mismatch, then reinstall clean
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            echo 'STEP_1_ANDROID_VERSION'
+            adb shell getprop ro.build.version.sdk
+            echo 'STEP_2_CLEAN_INSTALL_26085'
+            adb install /tmp/aa/AA_ONEAPP2_INDEPENDENT_PREVIEW_v26085_TEST_ONLY.apk
+            echo 'STEP_3_UPDATE_26085_TO_26086_EXPECT_INCOMPATIBLE_SIGNER'
+            set +e
+            adb install -r /tmp/aa/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk > /tmp/update_result.txt 2>&1
+            rc=$?
+            set -e
+            cat /tmp/update_result.txt
+            if [ "$rc" -eq 0 ]; then
+              echo 'UPDATE_ACCEPTED: signer compatible'; exit 2
+            fi
+            if ! grep -E 'INSTALL_FAILED_UPDATE_INCOMPATIBLE|signatures do not match' /tmp/update_result.txt ; then
+              echo 'UNEXPECTED_UPDATE_FAILURE_NOT_PROVEN_SIGNER'; exit 3
+            fi
+            echo 'STEP_4_EMULATOR_ONLY_REMOVE_PREVIEW'
+            adb uninstall com.aaairpods.oneapp.preview
+            echo 'STEP_5_CLEAN_INSTALL_26086'
+            adb install /tmp/aa/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk
+            echo 'STEP_6_VERIFY_INSTALLED_PACKAGE'
+            adb shell pm path com.aaairpods.oneapp.preview
+            echo 'CLEAN_INSTALL=PASS; CROSS_SIGNER_UPDATE=EXPECTED_FAILURE; GOLDEN_NOT_TOUCHED=PASS'
