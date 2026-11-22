@@ -1,0 +1,56 @@
+name: Publish checksum-verified AA OneApp v26085 TEST APK (binary only)
+on:
+  push:
+    branches: [aa-oneapp-v26085-apk-download-20261122]
+    paths:
+      - '.apk-transfer/v26085_*.txt'
+      - '.github/workflows/aa-oneapp-v26085-public-apk-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish-verified-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct EXACT existing v26085 signed APK and verify byte-for-byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import base64, hashlib, pathlib, zipfile
+          files=sorted(pathlib.Path('.apk-transfer').glob('v26085_*.txt'))
+          assert len(files)==22, f"EXPECTED_22_PARTS_GOT_{len(files)}"
+          for i,p in enumerate(files):
+              assert p.name==f"v26085_{i:03d}.txt", p.name
+              assert p.stat().st_size==(332988 if i==21 else 700000),p.name
+          raw=base64.b64decode(''.join(p.read_text('ascii') for p in files),validate=True)
+          digest=hashlib.sha256(raw).hexdigest()
+          assert len(raw)==11274740, f"BAD_BYTE_LENGTH_{len(raw)}"
+          assert digest=="aed930c0e374e27bd62e5cdabc5b4ab8aa06dd734de9cbbb7db5b37667574c36", f"BAD_SHA256_{digest}"
+          apk=pathlib.Path('out/AA_ONEAPP2_INDEPENDENT_PREVIEW_v26085_TEST_ONLY.apk')
+          apk.write_bytes(raw)
+          with zipfile.ZipFile(apk) as z:
+              assert z.testzip() is None,"APK_CORRUPT_ZIP"
+              data=z.read('assets/golden_controller_b_493_IMMUTABLE_REFERENCE.sh')
+              assert hashlib.sha256(data).hexdigest()=="49364923ba83acaa02d4e6a2b58251df7697182ff82a4b33ae22abbc94764623"
+              assert any(p.startswith('classes') and p.endswith('.dex') for p in z.namelist())
+          pathlib.Path('out/SHA256SUMS.txt').write_text(digest+'  '+apk.name+'\n')
+          pathlib.Path('out/STATUS.txt').write_text('PACKAGE=com.aaairpods.oneapp.preview\nVERSION_CODE=26085\nSOURCE_GIT_SHA=140ce44ac4d6ed2f37fdf631e25b74bc50e479b7\nZIP_DEX_CHECKSUM=PASS\nEXISTING_GOLDEN=NOT_TOUCHED\nGOLDEN_PHYSICAL_PARITY=NOT_PROVEN\nPREVIEW_TEST_ONLY=YES\n')
+          print('EXACT_SIGNED_APK_RECONSTRUCTION=PASS SHA256='+digest)
+          PY
+      - name: Publish downloadable APK on existing public app distribution repo
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG='aa-oneapp-v26085-independent-preview-test-only-20261122'
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "PUBLIC_RELEASE_ALREADY_EXISTS"
+            exit 0
+          fi
+          gh release create "$TAG" out/AA_ONEAPP2_INDEPENDENT_PREVIEW_v26085_TEST_ONLY.apk out/SHA256SUMS.txt out/STATUS.txt --target "$GITHUB_SHA" --title 'AA AirPods OneApp v26085 - independently signed test APK (NOT GOLDEN FINAL)' --notes 'Direct download of byte-for-byte original v26085 signed APK (SHA256 aed930c0e374e27bd62e5cdabc5b4ab8aa06dd734de9cbbb7db5b37667574c36). Includes in-app ADB six-digit pairing, own :47652 daemon bootstrap and in-app selfheal, one-package Edge focus OS grant handshake, old-runtime read-only isolation. Built from private SHA 140ce44ac4d6. NOT physically verified as Golden B493 equivalent, and NOT a replacement for installed working Golden. Signed with disposable preview-only certificate. Older preview cannot be upgraded in place if signer differs.' --prerelease --latest=false
+          echo "PUBLIC_DOWNLOAD_READY=https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/AA_ONEAPP2_INDEPENDENT_PREVIEW_v26085_TEST_ONLY.apk"
