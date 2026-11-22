@@ -29,8 +29,10 @@ jobs:
           "$signer" verify --verbose --print-certs "$p86" >/tmp/86.txt
           grep -F 'Verified using v2 scheme (APK Signature Scheme v2): true' /tmp/85.txt
           grep -F 'Verified using v2 scheme (APK Signature Scheme v2): true' /tmp/86.txt
-          sha85="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/85.txt | head -1)"
-          sha86="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/86.txt | head -1)"
+          sha85="$(grep -i 'certificate SHA-256 digest' /tmp/85.txt | head -1 | sed 's/.*: *//')"
+          sha86="$(grep -i 'certificate SHA-256 digest' /tmp/86.txt | head -1 | sed 's/.*: *//')"
+          cat /tmp/85.txt | tail -n 12
+          cat /tmp/86.txt | tail -n 12
           test -n "$sha85"
           test -n "$sha86"
           echo "V26085_CERT_SHA256=$sha85"
