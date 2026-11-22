@@ -1,0 +1,69 @@
+name: Publish verified AA OneApp v26086 explained-menu APK
+on:
+  push:
+    branches: [aa-oneapp-v26086-guided-ux-download-20261122]
+    paths:
+      - '.apk-transfer/v26086_*.txt'
+      - '.github/workflows/aa-oneapp-v26086-public-apk-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstitute exact private-build signed APK, hash and ZIP verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import pathlib,base64,hashlib,zipfile
+          root=pathlib.Path('.apk-transfer')
+          m=dict(x.strip().split('=',1) for x in (root/'v26086_MANIFEST.txt').read_text('ascii').splitlines() if '=' in x)
+          n=int(m['PARTS'])
+          chunks=sorted(root.glob('v26086_[0-9][0-9][0-9].txt'))
+          assert n>0 and len(chunks)==n, f"INVALID_PART_COUNT {len(chunks)} vs {n}"
+          for i,p in enumerate(chunks):
+              assert p.name==f'v26086_{i:03d}.txt'
+              assert p.stat().st_size<=700000
+          text=''.join(p.read_text('ascii') for p in chunks)
+          raw=base64.b64decode(text,validate=True)
+          digest=hashlib.sha256(raw).hexdigest()
+          assert digest==m['SHA256'],f"BAD_DIGEST {digest}"
+          assert len(raw)==int(m['SIZE']),f"BAD_SIZE {len(raw)}"
+          apk=pathlib.Path('out/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk')
+          apk.write_bytes(raw)
+          with zipfile.ZipFile(apk) as z:
+              assert z.testzip() is None,"APK_ZIP_BROKEN"
+              assert any(x.startswith('classes') and x.endswith('.dex') for x in z.namelist())
+              golden=z.read('assets/golden_controller_b_493_IMMUTABLE_REFERENCE.sh')
+              assert hashlib.sha256(golden).hexdigest()=="49364923ba83acaa02d4e6a2b58251df7697182ff82a4b33ae22abbc94764623"
+          pathlib.Path('out/SHA256SUMS.txt').write_text(digest+'  '+apk.name+'\n')
+          pathlib.Path('out/STATUS.txt').write_text(
+              'PACKAGE=com.aaairpods.oneapp.preview\nVERSION_CODE=26086\n'
+              'SOURCE=PRIVATE_GITHUB_BRANCH_aa-oneapp-status-guide-pairing-ui-20261122\n'
+              'USER_MENU_KOREAN_EXPLANATIONS=INCLUDED\n'
+              'REPAIR_ADB_PAIRING_ONLY_IF_NEEDED=INCLUDED\n'
+              'ONEAPP2_DAEMON_READY_NOT_PHYSICAL_AUDIO_PASS\n'
+              'GOLDEN_IMMUTABLE=PASS\nSIGNER=DISPOSABLE_PREVIEW_TEST_ONLY\n'
+              'IN_PLACE_UPDATE_FROM_V26085=NOT_SUPPORTED_IF_SIGNER_DIFFERS\n'
+              'GV80_PHYSICAL_PARITY=NOT_PROVEN\nFINAL=NO\n')
+          print('SIGNED_APK_PUBLIC_REASSEMBLY=PASS SHA256='+digest+' SIZE='+str(len(raw)))
+          PY
+      - name: Publish single APK on public GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG='aa-oneapp-v26086-guided-ui-test-20261122'
+          gh release view "$TAG" >/dev/null 2>&1 && { echo 'RELEASE_ALREADY_EXISTS'; exit 0; }
+          gh release create "$TAG" out/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk out/SHA256SUMS.txt out/STATUS.txt \
+            --target "$GITHUB_SHA" \
+            --title 'AA AirPods OneApp v26086 - Korean guided menus and conditional pairing (TEST)' \
+            --notes 'New explained Korean UI: clear functions for every button, live own-daemon and Bluetooth/AA/music checklist, pairing panel hidden when own daemon READY, explicit next steps, legacy technical raw logs collapsed by default. Standalone preview only, original Golden preserved, physical GV80 routing parity not proven. This release uses an independent ephemeral test signer; Android may require uninstalling previous v26085 preview before installing v26086 (NEVER uninstall Golden). Re-pair this test-only package if Android app data is cleared.' \
+            --prerelease --latest=false
+          echo "PUBLIC_APK=https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/AA_ONEAPP2_GUIDED_UI_v26086_TEST_ONLY.apk"
